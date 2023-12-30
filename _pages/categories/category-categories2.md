@@ -1,9 +1,9 @@
 ---
-title: "Categories2"
+title: "Spring"
 layout: category
-permalink: /categories/categories2/
+permalink: /categories/Spring/
 author_profile: true
-taxonomy: Categories2
+taxonomy: Spring
 sidebar:
   nav: "categories"
 ---
