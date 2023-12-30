@@ -9,6 +9,9 @@ main:
   - title: "GitHub"
     url: https://github.com/seokseungmin
 
+  - title: "Search"
+    url: /search/
+
   # - title: "Projects"
   #   url: /projects/
 
