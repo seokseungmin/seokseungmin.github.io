@@ -23,6 +23,8 @@ main:
 categories:
   - title: "Java"
     url: /categories/Java/
+  - title: "Jsp"
+    url: /categories/Jsp/
   - title: "Spring"
     url: /categories/Spring/
   - title: "Algorithm"
