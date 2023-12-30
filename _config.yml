@@ -19,12 +19,12 @@ minimal_mistakes_skin: "plum" # "default" "air", "aqua", ...
 
 # Site Settings
 locale: "ko-KR" #"en-US"
-title: "Blog Name Here" # 상단 헤더에 보이는 블로그 명
+title: "Devlog" # 상단 헤더에 보이는 블로그 명
 title_separator: "&#124;"
 subtitle: # site tagline that appears below site title in masthead
-name: "your name here" # 블로그 닉네임 설정
-description: "this is my blog!" # 블로그 설명
-url: "https://github-account.github.io" # 블로그 URL
+name: "Seok Seung Min" # 블로그 닉네임 설정
+description: "Devlog" # 블로그 설명
+url: "https://seokseungmin.github.io" # 블로그 URL
 baseurl: # the subpath of your site, e.g. "/blog"
 repository: "github-account/github-account.github.io" # GitHub Repo 이름
 teaser: #
@@ -93,21 +93,21 @@ analytics:
   provider: "google-gtag"
   # false (default), "google", "google-universal", "google-gtag", "custom"
   google:
-    tracking_id: "your tracking id here"
-    anonymize_ip: # true, false (default)
+    tracking_id: "G-7KSZF4NXSR"
+    anonymize_ip: "false" # true, false (default)
 
 # Site Author
 author:
-  name: "your name here" # 블로그 닉네임
+  name: "Seok Seung Min" # 블로그 닉네임
   avatar: "/assets/images/meee.png" # 블로그 프로필 사진
-  #   bio              : "hi all!"
-  # location         : "Seoul, Korea"
-  # email            : "youremailhere@xxxxxx.com"
+  #   bio              : "🧑🏻‍💻 I want to be a Back-End Developer."
+  # location         : "🇰🇷 Gyeonggi-do"
+  # email            : "seoksmin@gmail.com"
 
   links: # 사이트 링크
 #     - label: "Email"
 #       icon: "fas fa-fw fa-envelope-square"
-#       # url: "mailto:your.name@email.com"
+#       url: "mailto:seoksmin@gmail.com"
 #     - label: "Website"
 #       icon: "fas fa-fw fa-link"
 #       # url: "https://your-website.com"
@@ -119,11 +119,13 @@ author:
 #       # url: "https://facebook.com/"
 #     - label: "GitHub"
 #       icon: "fab fa-fw fa-github"
-#       url: "https://github.com/"
+#       url: "https://github.com/seokseungmin"
 #     - label: "Instagram"
 #       icon: "fab fa-fw fa-instagram"
-#       url: "https://www.instagram.com/"
-
+#       url: "https://instagram.com/stone.seok"
+#     - label: "YouTube"
+#       icon: "fab fa-fw fa-youtube"
+#       url: "https://www.youtube.com/@seokseungmin"
 # Site Footer
 footer:
   links:
