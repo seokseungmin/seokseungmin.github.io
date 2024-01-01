@@ -315,7 +315,3 @@ comments: false
 본인 소개 여기에 입력
 ```
 ---
-
-
-[VER2.1]
-![choiiis github blog main](/assets/images/posts_img/readme/ver2_1_main.png)
