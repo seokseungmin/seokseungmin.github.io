@@ -25,7 +25,7 @@ subtitle: # site tagline that appears below site title in masthead
 name: "Seok Seung Min" # 블로그 닉네임 설정
 description: "Devlog" # 블로그 설명
 url: "https://seokseungmin.github.io" # 블로그 URL
-baseurl: "https://seokseungmin.github.io" # the subpath of your site, e.g. "/blog"
+baseurl: # the subpath of your site, e.g. "/blog"
 repository: "github-account/github-account.github.io" # GitHub Repo 이름
 teaser: #
 
