@@ -5,13 +5,13 @@ excerpt: "Connection Pool"
 categories: Jsp
 tags:  Jsp
 
-permalink: /categories/2023-12-28-Connection Pool/ # url
+permalink: /categories/2024-01-03-Connection Pool/ # url
 
 toc: true
 toc_sticky: true
 
-date: 2024-01-02
-last_modified_at: 2023-01-02
+date: 2024-01-03
+last_modified_at: 2024-01-03
 ---
 
 # Connection Pool
