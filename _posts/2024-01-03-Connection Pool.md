@@ -5,7 +5,7 @@ excerpt: "Connection Pool"
 categories: Jsp
 tags:  Jsp
 
-permalink: /categories/2024-01-03-Connection Pool/ # url
+permalink: /categories/Connection Pool/ # url
 
 toc: true
 toc_sticky: true
