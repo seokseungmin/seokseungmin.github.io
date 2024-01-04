@@ -5,13 +5,13 @@ excerpt: "JSP request, response"
 categories: Jsp
 tags:  Jsp
 
-permalink: /categories/2023-12-28-JSP request, response/ # url
+permalink: /categories/JSP request, response/ # url
 
 toc: true
 toc_sticky: true
 
 date: 2024-01-02
-last_modified_at: 2023-01-02
+last_modified_at: 2024-01-02
 ---
 
 # JSP request, response
