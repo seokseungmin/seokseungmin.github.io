@@ -16,7 +16,7 @@ last_modified_at: 2023-12-31
 
 # Servlet Life-Cycle
 
-<center><img src="/assets/images/posts_img/readme/서블릿생명주기.png" width="50%" height="50%"></center>
+<center><img src="/assets/images/posts_img/readme/서블릿생명주기.png" width="100%" height="100%"></center>
 
 ```
 서블릿은 처음에 생성을 할수가 있고, 그 생성 단계를 우리가 init() 단계라고 함.
@@ -29,7 +29,7 @@ last_modified_at: 2023-12-31
 
 # 생명주기 관련 메서드
 
-<center><img src="/assets/images/posts_img/readme/생명주기관련메서드.png" width="50%" height="50%"></center>
+<center><img src="/assets/images/posts_img/readme/생명주기관련메서드.png" width="100%" height="100%"></center>
 
 ```
 단계별로 호출, 콜백 메서드를 제공함으로써 각 단계별로 우리가 어떠한 특정한 작업을 더 할수가 있음.
