@@ -6,7 +6,7 @@ excerpt: "Servlet request, response"
 categories: Jsp
 tags:  Jsp
 
-permalink: /categories/2023-12-28-Servlet request, response/ # url
+permalink: /categories/Servlet request, response/ # url
 
 toc: true
 toc_sticky: true
@@ -32,7 +32,7 @@ ServletEx 클래스를 만들기 위해선 HttpServlet 클래스를 상속받아
 
 # TestServletClass.java
 
-```Java
+```java
 package com.servlet;
 
 import java.io.IOException;
