@@ -6,7 +6,7 @@ excerpt: "Collections"
 categories: Java
 tags:  Java
 
-permalink: /categories/2023-12-29-Collections/ # url
+permalink: /categories/Collections/ # url
 
 toc: true
 toc_sticky: true
@@ -16,7 +16,9 @@ last_modified_at: 2023-12-30
 ---
 
 # Collections
+
 # List
+
 ```
 List는 인터페이스로 이를 구현한 클래스는 인덱스를 이용해서 데이터를 관리한다.
 List(구현) -> Vector
@@ -26,7 +28,8 @@ List(구현) -> Vector
 인덱스를 이용한다.
 데이터 중복이 가능하다.
 ```
-```Java
+
+```java
 package pjtTest;
 
 import java.util.ArrayList;
@@ -89,7 +92,9 @@ public class MainClass {
     ==================================
 
 # Map
+
 # Map은 인터페이스로 이를 구현한 클래스는 Key를 이용해서 데이터를 관리한다.
+
 ```
 HashMap (구현) -> Map
 특징
@@ -97,7 +102,8 @@ HashMap (구현) -> Map
 -> Key는 중복될 수 없다.
 -> 데이터 중복이 가능하다.
 ```
-```Java
+
+```java
 package pjtTest;
 
 import java.util.HashMap;
