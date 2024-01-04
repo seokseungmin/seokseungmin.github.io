@@ -5,7 +5,7 @@ excerpt: "Servlet Life-Cycle"
 categories: Jsp
 tags:  Jsp
 
-permalink: /categories/2023-12-28-Servlet Life-Cycle/ # url
+permalink: /categories/Servlet Life-Cycle/ # url
 
 toc: true
 toc_sticky: true
@@ -49,7 +49,7 @@ init() 단계와 destroy() 단계 전에 @postConstruct라는 어노테이션을
 사용할 수도 있음.
 ```
 
-```Java
+```java
 package com.servlet;
 
 import java.io.IOException;
