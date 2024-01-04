@@ -55,7 +55,7 @@ last_modified_at: 2024-01-03
 # BookServlet.java
 책 정보 조회
 
-```Java
+```java
 package com.servlet;
 
 import java.io.IOException;
@@ -101,7 +101,7 @@ public class BookServlet extends HttpServlet {
 
 # BookDTO.java
 
-```Java
+```java
 package com.servlet;
 
 public class BookDTO {
@@ -133,7 +133,7 @@ public class BookDTO {
 
 # BookDAO.java
 
-```Java
+```java
 package com.servlet;
 
 import java.sql.Connection;
