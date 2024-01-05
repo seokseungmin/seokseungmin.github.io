@@ -47,6 +47,15 @@ comments:
   utterances:
     theme: "github-light" # "github-dark"
     issue_term: "pathname"
+  giscus:
+    repo:                "seokseungmin/seokseungmin.github.io"
+    repo-id:             "R_kgDOK_CgRQ"
+    category:            "General"
+    category-id:         "DIC_kwDOK_CgRc4CcNNI"
+    mapping:             "pathname"
+    reaction-enabled:    "1"
+    theme:               "light"
+    crossorigin:         "anonymous"
   staticman:
     branch: # "master"
     endpoint: # "https://{your Staticman v3 API}/v3/entry/github/"
