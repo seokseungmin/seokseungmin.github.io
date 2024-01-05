@@ -34,7 +34,7 @@ masthead_title: # overrides the website title displayed in the masthead, use " "
 # breadcrumbs            : false # true, false (default)
 words_per_minute: 200
 comments:
-  provider: "giscus" # false (default), "disqus", "discourse", "facebook", "staticman", "staticman_v2", "utterances", "custom"
+  provider: "utterances" # false (default), "disqus", "discourse", "facebook", "staticman", "staticman_v2", "utterances", "custom"
   disqus:
     shortname: # https://help.disqus.com/customer/portal/articles/466208-what-s-a-shortname-
   discourse:
@@ -47,15 +47,6 @@ comments:
   utterances:
     theme: "github-light" # "github-dark"
     issue_term: "pathname"
-  giscus:
-    repo:                "seokseungmin/seokseungmin.github.io"
-    repo-id:             "R_kgDOK_CgRQ"
-    category:            "General"
-    category-id:         "DIC_kwDOK_CgRc4CcNNI"
-    mapping:             "pathname"
-    reaction-enabled:    "1"
-    theme:               "light"
-    crossorigin:         "anonymous"
   staticman:
     branch: # "master"
     endpoint: # "https://{your Staticman v3 API}/v3/entry/github/"
