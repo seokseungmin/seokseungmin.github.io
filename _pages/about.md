@@ -1,5 +1,5 @@
 ---
-title: "석승민"
+title: "Seok Seung Min"
 permalink: /about/
 layout: single
 comments: false
