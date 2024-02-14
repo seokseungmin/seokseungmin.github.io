@@ -1,5 +1,5 @@
 ---
-title: "Hi all! I'm Seok Seung Min👋🏻"
+title: "석승민"
 permalink: /about/
 layout: single
 comments: false
