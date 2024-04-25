@@ -20,9 +20,9 @@ $monospace: 'Bareun_hipi';
 
 
 /* sans serif typefaces */
-$sans-serif-narrow: $sans-serif !default;
-$helvetica: Helvetica, "Helvetica Neue", Arial, sans-serif !default;
-$menufont: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', "Montserrat", "BioRhyme", "Pretendard", sans-serif !default;
+$sans-serif-narrow: $sans-serif;
+$helvetica: $sans-serif;
+$menufont: $sans-serif;
 
 
 /* serif typefaces */
