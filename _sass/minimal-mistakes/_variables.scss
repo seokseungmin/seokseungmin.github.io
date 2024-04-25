@@ -26,14 +26,14 @@ $menufont: $sans-serif;
 
 
 /* serif typefaces */
-$georgia: Georgia, serif !default;
-$times: Times, serif !default;
-$bodoni: "Bodoni MT", serif !default;
-$calisto: "Calisto MT", serif !default;
-$garamond: Garamond, serif !default;
-$lobster: 'Lobster', cursive !default;
-$biorhyme: 'BioRhyme', serif !default;
-$creteround: 'Crete Round', serif !default;
+$georgia: $sans-serif;
+$times: $sans-serif;
+$bodoni: $sans-serif;
+$calisto: $sans-serif;
+$garamond: $sans-serif;
+$lobster: $sans-serif;
+$biorhyme: $sans-serif;
+$creteround: $sans-serif;
 
 $global-font-family: $sans-serif;
 $header-font-family: $sans-serif;
