@@ -39,24 +39,23 @@ $global-font-family: $sans-serif;
 $header-font-family: $sans-serif;
 $caption-font-family: $serif;
 
-/* type scale */
-$type-size-1: 2.7em !default; // ~43.2px
-$type-size-2: 2.2em !default; // ~35.2px
-$type-size-3: 1.8em !default; // ~28.8px
-$type-size-4: 1.5em !default; // ~24px
-$type-size-5: 1.2em !default; // ~19.2px
-$type-size-6: 0.9em !default; // ~14.4px
-$type-size-7: 0.85em !default; // ~13.6px
-$type-size-8: 0.8em !default; // ~12.8px
+/* Type scale */
+$type-size-1: 2.5em !default; // ~40px (원래: 43.2px)
+$type-size-2: 2em !default; // ~32px (원래: 35.2px)
+$type-size-3: 1.6em !default; // ~25.6px (원래: 28.8px)
+$type-size-4: 1.3em !default; // ~20.8px (원래: 24px)
+$type-size-5: 1.1em !default; // ~17.6px (원래: 19.2px)
+$type-size-6: 0.8em !default; // ~12.8px (원래: 14.4px)
+$type-size-7: 0.75em !default; // ~12px (원래: 13.6px)
+$type-size-8: 0.7em !default; // ~11.2px (원래: 12.8px)
 
-
-/* headline scale */
-$h-size-1: 1.719em !default; // ~27.504px (약 10% 증가)
-$h-size-2: 1.595em !default; // ~25.52px (약 10% 증가)
-$h-size-3: 1.3475em !default; // ~21.56px (약 10% 증가)
-$h-size-4: 1.22375em !default; // ~19.58px (약 10% 증가)
-$h-size-5: 1.161875em !default; // ~18.62px (약 10% 증가)
-$h-size-6: 1.1309375em !default; // ~18.09px (약 10% 증가)
+/* Headline scale */
+$h-size-1: 2.2em !default; // ~35.2px (원래: ~27.504px)
+$h-size-2: 2em !default; // ~32px (원래: ~25.52px)
+$h-size-3: 1.7em !default; // ~27.2px (원래: ~21.56px)
+$h-size-4: 1.5em !default; // ~24px (원래: ~19.58px)
+$h-size-5: 1.4em !default; // ~22.4px (원래: ~18.62px)
+$h-size-6: 1.3em !default; // ~20.8px (원래: ~18.09px)
 
 
 /*
