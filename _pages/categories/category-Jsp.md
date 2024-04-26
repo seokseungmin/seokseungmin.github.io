@@ -1,9 +1,9 @@
 ---
-title: "Jsp"
+title: "Computer Science"
 layout: category
-permalink: /categories/Jsp/
+permalink: /categories/Computer Science/
 author_profile: true
-taxonomy: Jsp
+taxonomy: Computer Science
 sidebar:
   nav: "categories"
 ---
