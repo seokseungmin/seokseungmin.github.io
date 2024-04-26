@@ -23,8 +23,8 @@ main:
 categories:
   - title: "Java"
     url: /categories/Java/
-  - title: "Jsp"
-    url: /categories/Jsp/
+  - title: "객체지향"
+    url: /categories/객체지향/
   - title: "Design Pattern"
     url: /categories/Design Pattern/
   - title: "Spring"
