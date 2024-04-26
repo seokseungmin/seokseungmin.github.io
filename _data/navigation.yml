@@ -23,15 +23,21 @@ main:
 categories:
   - title: "Java"
     url: /categories/Java/
-  - title: "객체지향"
-    url: /categories/객체지향/
-  - title: "Design Pattern"
-    url: /categories/Design Pattern/
-  - title: "Spring"
-    url: /categories/Spring/
-  - title: "SQL"
-    url: /categories/SQL/
+  - title: "Computer Science"
+    url: /categories/Computer Science/
+  - title: "Data Structure"
+    url: /categories/Data Structure/
   - title: "Algorithm"
     url: /categories/Algorithm/
+  - title: "Coding Test"
+    url: /categories/Coding Test/
+  - title: "Spring"
+    url: /categories/Spring/
+  - title: "Database"
+    url: /categories/Database/
+  - title: "SQL"
+    url: /categories/SQL/
+  - title: "Project" 
+    url: /categories/Project/
   - title: "Blog" 
     url: /categories/Blog/
