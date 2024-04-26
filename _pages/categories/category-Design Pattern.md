@@ -1,9 +1,9 @@
 ---
-title: "Design Pattern"
+title: "Data Structure"
 layout: category
-permalink: /categories/Design Pattern/
+permalink: /categories/Data Structure/
 author_profile: true
-taxonomy: Design Pattern
+taxonomy: Data Structure
 sidebar:
   nav: "categories"
 ---
