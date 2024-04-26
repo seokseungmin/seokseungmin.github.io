@@ -24,13 +24,13 @@ categories:
   - title: "Java"
     url: /categories/Java/
   - title: "Computer Science"
-    url: /categories/Computer Science/
+    url: /categories/Computer-Science/
   - title: "Data Structure"
-    url: /categories/Data Structure/
+    url: /categories/Data-Structure/
   - title: "Algorithm"
     url: /categories/Algorithm/
   - title: "Coding Test"
-    url: /categories/Coding Test/
+    url: /categories/Coding-Test/
   - title: "Spring"
     url: /categories/Spring/
   - title: "Database"
@@ -40,6 +40,6 @@ categories:
   - title: "Project" 
     url: /categories/Project/
   - title: "Today I Learned" 
-    url: /categories/Today I Learned/
+    url: /categories/Today-I-Learned/
   - title: "Blog" 
     url: /categories/Blog/
