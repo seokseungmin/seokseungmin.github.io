@@ -56,7 +56,7 @@ To use retry middleware with Faraday v2.0+, install `faraday-retry` gem
 Jekyll 은 Liquid 라는 템플릿 언어(template language)를 사용한다.<br>
 템플릿 언어는 중괄호(curly brace)를 사용해서 변수, 제어문을 표현한다.<br>
 
-```
+```liquid
 <!-- 변수 표현 -->
 `{ { variable } }`
 
