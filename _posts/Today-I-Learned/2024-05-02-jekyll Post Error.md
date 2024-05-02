@@ -40,12 +40,12 @@ _config.yml 에 future: true 와 페이지 옵션(타이틀, 카테고리 적는
 또 다른 오류발생
 ---
 
-```console
+```
 Warning: The github-pages gem can't satisfy your Gemfile's dependencies.
 If you want to use a different Jekyll version or need additional dependencies, consider building Jekyll site with GitHub Actions: https://jekyllrb.com/docs/continuous-integration/github-actions/
 To use retry middleware with Faraday v2.0+, install `faraday-retry` gem
-  Liquid Exception: Liquid syntax error (line 232): Variable '{{1, 2, 3}' was not properly terminated with regexp: /\}\}/ in /github/workspace/_posts/Java/2024-05-02-연습문제풀이-3.md
-/usr/local/bundle/gems/liquid-4.0.4/lib/liquid/block_body.rb:136:in `raise_missing_variable_terminator': Liquid syntax error (line 232): Variable '{{1, 2, 3}' was not properly terminated with regexp: /\\}\\}/ (Liquid::SyntaxError)
+  Liquid Exception: Liquid syntax error (line 232): Variable '{ {1, 2, 3}' was not properly terminated with regexp: /\}\}/ in /github/workspace/_posts/Java/2024-05-02-연습문제풀이-3.md
+/usr/local/bundle/gems/liquid-4.0.4/lib/liquid/block_body.rb:136:in `raise_missing_variable_terminator': Liquid syntax error (line 232): Variable '{ {1, 2, 3}' was not properly terminated with regexp: /\\}\\}/ (Liquid::SyntaxError)
 ```
 
 오류 발생 원인
@@ -80,7 +80,7 @@ Jekyll 에서는 다양한 템플릿 태그를 지원하는데, 그 중에서 �
 다음과 같이 작성하면 된다.<br>
 
 ```
-{퍼센트_기호 raw 퍼센트_기호}  {{1}, {1,2,3}, {1,2}} 이 있다면 `{1}`, `{1,2,3}`, `{1,2}`  {퍼센트_기호 endraw 퍼센트_기호}<br>
+{퍼센트_기호 raw 퍼센트_기호}  { {1}, {1,2,3}, {1,2} } 이 있다면 `{1}`, `{1,2,3}`, `{1,2}`  {퍼센트_기호 endraw 퍼센트_기호}<br>
 ```
 
 **참고 블로그:**
