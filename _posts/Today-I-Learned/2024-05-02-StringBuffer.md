@@ -3,9 +3,9 @@ title: "StringBuffer"
 excerpt: "[TIL] StringBuffer"
 
 categories:
-  - Java
+  - Today-I-Learned
 tags:
-  - [Java]
+  - [Today-I-Learned]
 
 permalink: /categories/StringBuffer/ # url
 
