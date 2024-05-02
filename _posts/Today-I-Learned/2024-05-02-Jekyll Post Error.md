@@ -58,7 +58,7 @@ Jekyll 은 Liquid 라는 템플릿 언어(template language)를 사용한다.<br
 
 ```
 <!-- 변수 표현 -->
-`{{ variable }}`
+`{ { variable } }`
 
 <!-- 제어문 표현 -->
 {% raw %}
