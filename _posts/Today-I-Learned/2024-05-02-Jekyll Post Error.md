@@ -1,13 +1,13 @@
 ---
-title: "jekyll Post Error"
-excerpt: "[TIL] jekyll Post Error"
+title: "Jekyll Post Error"
+excerpt: "[TIL] Jekyll Post Error"
 
 categories:
   - Today I Learned
 tags:
   - [Today I Learned]
 
-permalink: /categories/jekyllPostError/ # url
+permalink: /categories/JekyllPostError/ # url
 
 toc: true
 toc_sticky: true
@@ -22,7 +22,7 @@ last_modified_at: 2024-05-02
 다음의 내용들은 기본적으로 지켜야 하는 것이다.<br>
 YEAR-MONTH-DAY-title.md 파일 제목 형식을 확인.<br>
 포스팅 날짜 맞게 입력했는지 확인.<br>
-_post 폴더에 맞게 위치해 있는지 확인.<br>
+_posts 폴더에 맞게 위치해 있는지 확인.<br>
 카테고리 맞게 입력 했는지, 해당 카테고리 존재하는지 확인.<br>
 
 첫번째 해결방법
@@ -80,7 +80,7 @@ Jekyll 에서는 다양한 템플릿 태그를 지원하는데, 그 중에서 �
 다음과 같이 작성하면 된다.<br>
 
 ```
-{퍼센트_기호 raw 퍼센트_기호}  { {1}, {1,2,3}, {1,2} } 이 있다면 `{1}`, `{1,2,3}`, `{1,2}`  {퍼센트_기호 endraw 퍼센트_기호}<br>
+{퍼센트_기호 raw 퍼센트_기호}  `{ {1}, {1,2,3}, {1,2} }` 이 있다면 `{1}`, `{1,2,3}`, `{1,2}`  {퍼센트_기호 endraw 퍼센트_기호}
 ```
 
 **참고 블로그:**
