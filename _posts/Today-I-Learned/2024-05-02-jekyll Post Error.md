@@ -45,7 +45,7 @@ Warning: The github-pages gem can't satisfy your Gemfile's dependencies.
 If you want to use a different Jekyll version or need additional dependencies, consider building Jekyll site with GitHub Actions: https://jekyllrb.com/docs/continuous-integration/github-actions/
 To use retry middleware with Faraday v2.0+, install `faraday-retry` gem
   Liquid Exception: Liquid syntax error (line 232): Variable '{{1, 2, 3}' was not properly terminated with regexp: /\}\}/ in /github/workspace/_posts/Java/2024-05-02-연습문제풀이-3.md
-/usr/local/bundle/gems/liquid-4.0.4/lib/liquid/block_body.rb:136:in `raise_missing_variable_terminator': Liquid syntax error (line 232): Variable '{ {1, 2, 3}' was not properly terminated with regexp: /\\}\\}/ (Liquid::SyntaxError)
+/usr/local/bundle/gems/liquid-4.0.4/lib/liquid/block_body.rb:136:in `raise_missing_variable_terminator': Liquid syntax error (line 232): Variable '{{1, 2, 3}' was not properly terminated with regexp: /\\}\\}/ (Liquid::SyntaxError)
 ```
 
 오류 발생 원인
@@ -62,7 +62,7 @@ Jekyll 은 Liquid 라는 템플릿 언어(template language)를 사용한다.<br
 
 <!-- 제어문 표현 -->
 {% if user %}
-	Hello, { { user.name } }!
+	Hello, {{ user.name }}!
 {% endif %}
 ```
 
@@ -78,7 +78,7 @@ Jekyll 에서는 다양한 템플릿 태그를 지원하는데, 그 중에서 �
 중괄호를 그대로 표현하고 싶은 텍스트 범위에 {퍼센트_기호 raw 퍼센트_기호} 중괄호가 포함된 텍스트 {퍼센트_기호 endraw 퍼센트_기호} 로 감싼다.<br>
 퍼센트_기호는 % 로 바꿔쓰면 된다.<br>
 다음과 같이 작성하면 된다.<br>
-{퍼센트_기호 raw 퍼센트_기호}  `{ {1}, {1,2,3}, {1,2} }` 이 있다면 `{1}`, `{1,2,3}`, `{1,2}`  {퍼센트_기호 endraw 퍼센트_기호}<br>
+{퍼센트_기호 raw 퍼센트_기호}  {% raw %}{{1}, {1,2,3}, {1,2}}{% endraw %} 이 있다면 `{1}`, `{1,2,3}`, `{1,2}`  {퍼센트_기호 endraw 퍼센트_기호}<br>
 
 **참고 블로그:**
 - [해결 깃허브 Pages 블로그 만들기 중 Posts 파일 업로드 안됨](https://velog.io/@jurije/%ED%95%B4%EA%B2%B0-%EA%B9%83%ED%97%88%EB%B8%8C-pages-%EB%B8%94%EB%A1%9C%EA%B7%B8-%EB%A7%8C%EB%93%A4%EA%B8%B0-%EC%A4%91-posts-%ED%8C%8C%EC%9D%BC-%EC%97%85%EB%A1%9C%EB%93%9C-%EC%95%88%EB%90%A8)
