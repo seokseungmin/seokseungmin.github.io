@@ -45,7 +45,7 @@ Warning: The github-pages gem can't satisfy your Gemfile's dependencies.
 If you want to use a different Jekyll version or need additional dependencies, consider building Jekyll site with GitHub Actions: https://jekyllrb.com/docs/continuous-integration/github-actions/
 To use retry middleware with Faraday v2.0+, install `faraday-retry` gem
   Liquid Exception: Liquid syntax error (line 232): Variable '{{1, 2, 3}' was not properly terminated with regexp: /\}\}/ in /github/workspace/_posts/Java/2024-05-02-연습문제풀이-3.md
-/usr/local/bundle/gems/liquid-4.0.4/lib/liquid/block_body.rb:136:in `raise_missing_variable_terminator': Liquid syntax error (line 232): Variable '{{1, 2, 3}' was not properly terminated with regexp: /\\}\\}/ (Liquid::SyntaxError)
+/usr/local/bundle/gems/liquid-4.0.4/lib/liquid/block_body.rb:136:in `raise_missing_variable_terminator': Liquid syntax error (line 232): Variable '{ {1, 2, 3}' was not properly terminated with regexp: /\\}\\}/ (Liquid::SyntaxError)
 ```
 
 오류 발생 원인
@@ -58,11 +58,11 @@ Jekyll 은 Liquid 라는 템플릿 언어(template language)를 사용한다.<br
 
 ```
 <!-- 변수 표현 -->
-{{ variable }}
+{ { variable } }
 
 <!-- 제어문 표현 -->
 {% if user %}
-	Hello, {{ user.name }}!
+	Hello, { { user.name } }!
 {% endif %}
 ```
 
