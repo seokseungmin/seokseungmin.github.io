@@ -48,5 +48,5 @@ scanner.close();
 
 이렇게 하면 사용자가 정수 이외의 값을 입력하더라도 프로그램이 멈추지 않고 계속해서 사용자로부터 올바른 입력을 받을 수 있습니다.
 
-
-출처: https://sayit.tistory.com/entry/InputMismatchException-java [Say It!, IT-story를 말하다.:티스토리]
+**참고 블로그:**
+[Say It!, IT-story를 말하다](https://sayit.tistory.com/entry/InputMismatchException-java)
