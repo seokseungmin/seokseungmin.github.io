@@ -3,9 +3,9 @@ title: "Java Mini Project1"
 excerpt: "[제로베이스] 구구단 출력"
 
 categories:
-  - Java
+  - Project
 tags:
-  - [Java]
+  - [Project]
 
 permalink: /categories/JavaMiniProject1/ # url
 
