@@ -27,7 +27,7 @@ String.format 함수를 학습해 보세요.<br>
 코드 작성시, 복잡하게 작성하기 보다는 최대한 필요한 코드를 통한 심플하게 작성해 주세요.<br>
 
 ```java
-public class Main {
+public class Project1 {
     public static void main(String[] args) {
 
         System.out.println("[구구단 출력]");
