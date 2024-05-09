@@ -6,56 +6,56 @@
    Typography
    ========================================================================== */
 
-$doc-font-size: 20 !default;
+$doc-font-size: 16 !default;
 
 /* paragraph indention */
 $paragraph-indent: false !default; // true, false (default)
 $indent-var: 0.7lem !default;
 
 /* system typefaces */
-$serif: 'Bareun_hipi';
+$serif: Georgia, Times, serif !default;
 /* 2022.01.19 font change */
-$sans-serif: 'Bareun_hipi';
-$monospace: 'Bareun_hipi';
+$sans-serif: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', "Montserrat", "Pretendard", "Merriweather", sans-serif !default;
+$monospace: "Fira Mono", "Pretendard", Monaco, Consolas, "Lucida Console", monospace !default;
 
 
 /* sans serif typefaces */
-$sans-serif-narrow: $sans-serif;
-$helvetica: $sans-serif;
-$menufont: $sans-serif;
+$sans-serif-narrow: $sans-serif !default;
+$helvetica: Helvetica, "Helvetica Neue", Arial, sans-serif !default;
+$menufont: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', "Montserrat", "BioRhyme", "Pretendard", sans-serif !default;
 
 
 /* serif typefaces */
-$georgia: $sans-serif;
-$times: $sans-serif;
-$bodoni: $sans-serif;
-$calisto: $sans-serif;
-$garamond: $sans-serif;
-$lobster: $sans-serif;
-$biorhyme: $sans-serif;
-$creteround: $sans-serif;
+$georgia: Georgia, serif !default;
+$times: Times, serif !default;
+$bodoni: "Bodoni MT", serif !default;
+$calisto: "Calisto MT", serif !default;
+$garamond: Garamond, serif !default;
+$lobster: 'Lobster', cursive !default;
+$biorhyme: 'BioRhyme', serif !default;
+$creteround: 'Crete Round', serif !default;
 
-$global-font-family: $sans-serif;
-$header-font-family: $sans-serif;
-$caption-font-family: $serif;
+$global-font-family: $sans-serif !default;
+$header-font-family: $sans-serif !default;
+$caption-font-family: $serif !default;
 
-/* Type scale */
-$type-size-1: 2.7em !default; // ~40px (원래: 43.2px)
-$type-size-2: 2.2em !default; // ~32px (원래: 35.2px)
-$type-size-3: 1.8em !default; // ~25.6px (원래: 28.8px)
-$type-size-4: 1.3em !default; // ~20.8px (원래: 24px)
-$type-size-5: 1.1em !default; // ~17.6px (원래: 19.2px)
-$type-size-6: 0.8em !default; // ~12.8px (원래: 14.4px)
-$type-size-7: 0.75em !default; // ~12px (원래: 13.6px)
-$type-size-8: 0.7em !default; // ~11.2px (원래: 12.8px)
+/* type scale */
+$type-size-1: 2.441em !default; // ~39.056px
+$type-size-2: 1.953em !default; // ~31.248px
+$type-size-3: 1.563em !default; // ~25.008px
+$type-size-4: 1.25em !default; // ~20px
+$type-size-5: 1em !default; // ~16px
+$type-size-6: 0.75em !default; // ~12px
+$type-size-7: 0.6875em !default; // ~11px
+$type-size-8: 0.625em !default; // ~10px
 
-/* Headline scale */
-$h-size-1: 1.8em !default; 
-$h-size-2: 1.75em !default; 
-$h-size-3: 1.525em !default; 
-$h-size-4: 1.4125em !default; 
-$h-size-5: 1.35625em !default; 
-$h-size-6: 1.328125em !default;
+/* headline scale */
+$h-size-1: 1.563em !default; // ~25.008px
+$h-size-2: 1.45em !default; // ~20px
+$h-size-3: 1.225em !default; // ~18px
+$h-size-4: 1.1125em !default; // ~17px
+$h-size-5: 1.05625em !default; // ~16.5px
+$h-size-6: 1.028125em !default; // ~16px
 
 /*
    Colors
