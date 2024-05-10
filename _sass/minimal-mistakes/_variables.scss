@@ -13,31 +13,31 @@ $paragraph-indent: false !default; // true, false (default)
 $indent-var: 0.7lem !default;
 
 /* system typefaces */
-$serif: "D2Coding" "Bareun_hipi", Georgia, Times, serif !default;
+$serif: Georgia, Times, serif !default;
 /* 2022.01.19 font change */
-$sans-serif: "D2Coding", "Bareun_hipi", -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', "Montserrat", "Pretendard", "Merriweather", sans-serif !default;
-$monospace: "D2Coding", "Bareun_hipi", "Fira Mono", "Pretendard", Monaco, Consolas, "Lucida Console", monospace !default;
+$sans-serif: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', "Montserrat", "Pretendard", "Merriweather", sans-serif !default;
+$monospace: "Fira Mono", "Pretendard", Monaco, Consolas, "Lucida Console", monospace !default;
 
 
 /* sans serif typefaces */
 $sans-serif-narrow: $sans-serif !default;
-$helvetica: "D2Coding", "Bareun_hipi", Helvetica, "Helvetica Neue", Arial, sans-serif !default;
-$menufont: "D2Coding", "Bareun_hipi", -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', "Montserrat", "BioRhyme", "Pretendard", sans-serif !default;
+$helvetica: Helvetica, "Helvetica Neue", Arial, sans-serif !default;
+$menufont: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', "Montserrat", "BioRhyme", "Pretendard", sans-serif !default;
 
 
 /* serif typefaces */
-$georgia: "D2Coding", "Bareun_hipi", Georgia, serif !default;
-$times: "D2Coding", "Bareun_hipi", Times, serif !default;
-$bodoni: "D2Coding", "Bareun_hipi", "Bodoni MT", serif !default;
-$calisto: "D2Coding", "Bareun_hipi", "Calisto MT", serif !default;
-$garamond: "D2Coding", "Bareun_hipi", Garamond, serif !default;
-$lobster: "D2Coding", "Bareun_hipi", 'Lobster', cursive !default;
-$biorhyme: "D2Coding", "Bareun_hipi", 'BioRhyme', serif !default;
-$creteround: "D2Coding", "Bareun_hipi", 'Crete Round', serif !default;
+$georgia: Georgia, serif !default;
+$times: Times, serif !default;
+$bodoni: "Bodoni MT", serif !default;
+$calisto: "Calisto MT", serif !default;
+$garamond: Garamond, serif !default;
+$lobster: 'Lobster', cursive !default;
+$biorhyme: 'BioRhyme', serif !default;
+$creteround: 'Crete Round', serif !default;
 
-$global-font-family: "D2Coding", "Bareun_hipi", $sans-serif !default;
-$header-font-family: "D2Coding", "Bareun_hipi", $sans-serif !default;
-$caption-font-family: "D2Coding", "Bareun_hipi", $serif !default;
+$global-font-family: $sans-serif !default;
+$header-font-family: $sans-serif !default;
+$caption-font-family: "$serif !default;
 
 /* type scale */
 $type-size-1: 2.441em !default; // ~39.056px
