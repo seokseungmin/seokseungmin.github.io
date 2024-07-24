@@ -3,9 +3,9 @@ title: "스프링 핵심가이드 1주차"
 excerpt: "[제로베이스] 스프링 핵심가이드"
 
 categories:
-  - Project
+  - Spring
 tags:
-  - [Project]
+  - [Spring]
 
 permalink: /categories/Spring1Week/ # url
 
