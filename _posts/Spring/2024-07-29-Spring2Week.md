@@ -384,7 +384,7 @@ public ResponseEntity<MemberDto> postMemberDto3(@RequestBody MemberDto memberDto
 ## @DeleteMapping
 DELETE API는 웹 애플리케이션 서버를 거쳐 데이터베이스 등의 저장소에 있는 리소스를 삭제할 때 사용합니다. 컨트롤러를 통해 값을 받는 단계에서는 간단한 값을 받기 때문에 GET 메서드와 같이 URI에 값을 넣어 요청을 받는 형식으로 구현됩니다.
 
-### 예시 코드
+### @PathVariable을 사용한 예시 코드
 
 ```java
 package com.example.hello.controller;
@@ -396,7 +396,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class HelloController {
     
-    //http://localhost:8080/api/v1/get-api/variable1/{id}
+    // http://localhost:8080/api/v1/get-api/variable1/{id}
     @DeleteMapping("/api/v1/get-api/variable1/{id}")
     public String deleteResource(@PathVariable String id) {
         return "Deleted resource with id: " + id;
@@ -406,17 +406,39 @@ public class HelloController {
 
 위 예시 코드는 `@DeleteMapping` 어노테이션을 사용하여 특정 리소스를 삭제하는 REST API 엔드포인트를 정의합니다. `@PathVariable`을 사용하여 URI 경로에서 `id` 값을 받아옵니다.
 
+### @RequestParam을 사용한 예시 코드
+
+```java
+package com.example.hello.controller;
+
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class HelloController {
+
+    // http://localhost:8080/api/v1/get-api/resource?id=123
+    @DeleteMapping("/api/v1/get-api/resource")
+    public String deleteResourceById(@RequestParam String id) {
+        return "Deleted resource with id: " + id;
+    }
+}
+```
+
+위 예시 코드는 `@RequestParam` 어노테이션을 사용하여 쿼리 파라미터로 `id` 값을 받아 삭제 요청을 처리하는 엔드포인트를 정의합니다.
+
 ### Talend API Tester를 통한 동작 테스트
 
 1. Talend API Tester 크롬 확장 프로그램을 설치하고 실행합니다.
 2. 새로운 DELETE 요청을 생성합니다.
-3. URL에 `http://localhost:8080/api/v1/get-api/variable1/{id}`를 입력합니다. 여기서 `{id}`는 삭제하려는 리소스의 실제 ID로 바꿉니다.
+3. URL에 `http://localhost:8080/api/v1/get-api/resource?id=123`을 입력합니다. 여기서 `id=123`은 삭제하려는 리소스의 실제 ID입니다.
 4. **Send** 버튼을 클릭하여 요청을 보냅니다.
 
 **요청 예시:**
 
 ```
-DELETE /api/v1/get-api/variable1/123 HTTP/1.1
+DELETE /api/v1/get-api/resource?id=123 HTTP/1.1
 Host: localhost:8080
 ```
 
@@ -436,4 +458,6 @@ Deleted resource with id: 123
   - Content-Type: text/plain;charset=UTF-8
   - Content-Length: 28
   - Date: Mon, 29 Jul 2024 12:34:56 GMT
+
+위와 같이 Talend API Tester를 사용하면 DELETE 요청과 응답의 상세한 내용을 확인할 수 있습니다.
 
