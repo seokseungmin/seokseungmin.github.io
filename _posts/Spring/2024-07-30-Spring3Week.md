@@ -116,6 +116,7 @@ spring.jpa.hibernate.ddl-auto=create
 spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.format_sql=true
 ```
+
 create: 애플리케이션이 가동되고 SessionFactory가 실행될때 기존 테이블을 지우고 새로 생성합니다. <br>
 이 책에서는 모든 예제를 create로 설정하고 진행했습니다.<br>
 
