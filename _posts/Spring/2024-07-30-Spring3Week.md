@@ -24,12 +24,9 @@ last_modified_at: 2024-07-30
 
 ### 1. 마리아DB 설치
 - 다운로드
-아래 사이트에서 다운로드 받으면 된다. 설치는 굉장히 간단한 편!
+아래 사이트에서 다운로드 받으면 된다.
 
 다운로드 링크: [mariadb.org/download](https://mariadb.org/download)
-
-설치 후, Windows Terminal에서 편하게 접근하기 위해 환경변수를 설정하고, DB 접근 계정을 추가/삭제하는 과정을 포스팅한 링크를 덧붙이는 것으로 이 부분은 마무리.
-[블로그 포스트](https://velog.io/@zhyun/MariaDB)
 
 ---
 
