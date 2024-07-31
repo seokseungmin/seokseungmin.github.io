@@ -557,3 +557,327 @@ Page<Product> productPage = productRepository.findByName("펜", PageRequest.of(0
 System.out.println(productPage.getContent());
 
 getContent() 메서드를 사용해 출력하면 배열 형태로 값이 출력됩니다.
+
+# @Query 어노테이션 사용하기
+데이터베이스에서 값을 가져올 때는 앞 절에서 소개한 것처럼 메서드의 이름만으로 쿼리 메서드를 생성할 수도 있고 이번 절에서 살펴볼 @Query 어노테이션을 사용해 직접 JPQL을 작성할 수도 있습니다.
+JPQL을 사용하면 JPA 구현체에서 자동으로 쿼리 문장을 해석하고 실행하게 됩니다.
+만약 데이터베이스를 다른 데이터베이스로 변경할 일이 없다면 직접 해당 데이터베이스에 특화된 SQL을
+작성할 수 있으며, 주로 튜닝된 쿼리를 사용하고자 할 때 직접 SQL을 작성합니다.
+이 책에서는 JPQL을 직접 다루는 방법을 알아볼 텐데, 먼저 기본적인 JPQL을 사용해 상품정보를 조회하는 메서드를 리포지토리에 추가합니다.
+
+@Query 어노테이션을 사용하는 메서드
+@Query("SELECT p FROM Product AS p WHERE p.name = ?1")
+List<Product> findByName(String name);
+
+@Query 어노테이션을 사용해 JPQL 형식의 쿼리문을 작성합니다(참고로 쿼리문에서 SQL예약어에 해당하는 단어는 대문자로 작성했는데 소문자로 작성해도 됩니다.)
+FROM 뒤에서 엔티티 타입을 지정하고 별칭을 생성합니다(AS는 생략 가능합니다.)
+WHERE문에서는 SQL과 마찬가지로 조건을 지정합니다.
+조건문에서 사용한 '?1'은 파라미터를 전달받기 위한 인자에 해당합니다.
+1은 첫번쨰 파라미터를 의미합니다.
+하지만 이 같은 방식을 사용할 경우 파라미터의 순서가 바뀌면 오류가 발생할 가능성이 있어 @Param 어노테이션을 사용하는 것이 좋습니다.
+
+@Query 어노테이션과 @Param 어노테이션을 사용한 메서드
+@Query("SELECT p FROM Product p WHERE p.name = :name")
+List<Product> findByNameParam(@Param("name") String name);
+
+보다시피 파라미터를 바인딩하는 방식으로 메서드를 구현하면 코드의 가독성이 높아지고 유지보수가 수월해집니다.
+앞에서 살펴본 두 예제는 하이버네이트에서 동일한 쿼리를 생성해서 실행합니다.
+
+그리고 @Query를 사용하면 엔티티 타입이 아니라 원하는 칼럼의 값만 추출할 수 있습니다.
+
+특정 칼럼만 추출하는 쿼리
+@Query("SELECT p.name, p.price, p.stock FROM Product p WHERE p.name = :name")
+List<Object[]> findByNameparam2(@Param("name") String name);
+
+이 처럼 SELECT에 가져오고자 하는 칼럼을 지정하면 됩니다.
+이때 메서드에서는 Object 배열의 리스트 형태로 리턴 타입을 지정해야 합니다.
+
+# QueryDSL 적용하기
+앞에서는 @Query 어노테이션을 사용해 직접 JPQL의 쿼리를 작성하는 방법을 알아봤습니다.
+메서드의 이름을 기반으로 생성하는 JPQL의 한계는 @Query 어노테이션을 통해 대부분 해소할 수 있지만
+직접 문자열을 입력하기 때문에 컴파일 시점에 에러를 잡지 못하고 런타임 에러가 발생할 수 있습니다.
+쿼리의 문자열이 잘못된 경우에는 애플리케이션이 실행된 후 로직이 실행되고 나서야 오류를 발견할 수 있습니다.
+이러한 이유로 개발 환경에서는 문제가 없는 것처럼 보이다가 실제 운영 환경에 애플리케이션을 배포하고 나서 오류가 발견되는 리스크를 유발합니다.
+
+이 같은 문제를 해결하기 위해 사용되는 것이 QueryDSL 입니다.
+QueryDSL은 문자열이 아니라 코드로 쿼리를 작성할 수 있도록 도와줍니다.
+
+# QueryDSL이란?
+QueryDSL은 정적 타입을 이용해 SQL과 같은 쿼리를 생성할 수 있도록 지원하는 프레임워크입니다.
+문자열이나 XML파일을 통해 쿼리를 작성하는 대신 QueryDSL이 제공하는 플루언트(Fluent) API를 활용해 쿼리를 생성할 수 있습니다.
+
+# QueryDSL의 장점
+- IDE가 제공하는 코드 자동완성 기능을 사용할 수 있습니다.
+- 문법적으로 잘못된 쿼리를 허용하지 않습니다. 따라서 정상적으로 활용된 QueryDSL은 문법 오류를 발생시키지 않습니다.
+- 고정된 SQL 쿼리를 작성하지 않기 때문에 동적으로 쿼리를 생성할 수 있습니다.
+- 코드로 작성하므로 가독성 및 생산성이 향상됩니다.
+- 도메인 타입과 프로퍼티를 안전하게 참조할 수 있습니다.
+
+# QueryDSL을 사용하기 위한 프로젝트 설정
+
+build.gradle에 다음과 같이 설정
+
+```
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.2'
+    id 'io.spring.dependency-management' version '1.1.6'
+}
+
+group = 'com.springboot'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-configuration-processor'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.2'
+    implementation 'com.google.code.gson:gson:2.8.9'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    runtimeOnly 'com.h2database:h2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // QueryDSL
+    implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
+    annotationProcessor "com.querydsl:querydsl-apt:5.0.0:jakarta"
+    annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+    annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+// QueryDSL 플러그인 설정
+def querydslDir = "$buildDir/generated/source/querydsl"
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java', querydslDir]
+        }
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.annotationProcessorPath = configurations.annotationProcessor
+}
+
+compileJava {
+    options.annotationProcessorPath = configurations.annotationProcessor
+}
+```
+
+JPAAnnotationProcessor는 @Entity 어노테이션으로 정의된 엔티티 클래스를 찾아서 쿼리 타입을 생성합니다.
+
+## APT란?
+APT(Annotation Processing Tool)는 어노테이션으로 정의된 코드를 기반으로 새로운 코드를 생성하는 기능입니다.
+JDK 1.6부터 도입된 기능이며, 클래스를 컴파일하는 기능도 제공합니다.
+
+IntelliJ의 오른쪽 Gradle 탭에서 clean 실행 후 build를 실행한다.
+
+위와 같이 하면 아래 이미지처럼 프로젝트 -> build -> generated 에서 JPA entity class를 생성했던 디렉토리 명과 동일한 디렉토리에 Q 클래스가 생성되는 것을 볼 수 있다.
+
+QueryDSL Configuration
+프로젝트에서 QueryDSL을 사용하기 위해선 QueryDSL 설정이 필요한데, 아래와 같이 JPAQueryFactory를 Bean으로 등록한다.
+
+```java
+package com.springboot.advanced_jpa.config;
+
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+@RequiredArgsConstructor
+public class QueryDSLConfig {
+
+    @PersistenceContext
+    private final EntityManager entityManager;
+
+    @Bean
+    public JPAQueryFactory jpaQueryFactory(){
+        return new JPAQueryFactory(entityManager);
+    }
+}
+```
+
+QueryDSL은 지금까지 작성했던 엔티티 클래스와 Q도메인(Qdomain)이라는 쿼리 타입의 클래스를 자체적으로 생성해서 메타데이터로 사용하는데, 이를 통해 SQL과 같은 쿼리를 생성해서 제공합니다.
+
+# 기본적인 QueryDSL 사용하기
+앞의 프로젝트 설정을 마치면 QueryDSL을 사용할 준비가 끝났습니다.
+우선 테스트 코드로 기본적인  QueryDSL 사용법을 알아보겠습니다.
+테스트 코드를 작성해서 QueryDSL의 동작을 확인할 수 있습니다.
+
+```java
+@PersistenceContext
+    EntityManager entityManager;
+
+@Test
+    void queryDslTest() {
+        //given
+        JPAQuery<Product> query = new JPAQuery<>(entityManager);
+        QProduct qProduct = QProduct.product;
+
+        List<Product> productList = query
+                .from(qProduct)
+                .where(qProduct.name.eq("펜"))
+                .orderBy(qProduct.price.asc())
+                .fetch();
+
+        for (Product product : productList) {
+            System.out.println("---------------");
+            System.out.println("Product Number : " + product.getNumber());
+            System.out.println("Product Name : " + product.getName());
+            System.out.println("Product Price : " + product.getPrice());
+            System.out.println("Product Stock : " + product.getStock());
+            System.out.println();
+            System.out.println("---------------");
+        }
+    }
+```
+
+QueryDSL에 의해 생성된 Q도메인 클래스를 활용하는 코드입니다.
+다만 Q도메인 클래스와 대응되는 테스트 클래스가 없으므로 엔티티 클래스에 대응되는 리포지토리의 테스트 클래스에(ProductRepositoryTest)에 포함해도 무관합니다.
+
+위 코드를 자세히 살펴보면, QueryDSL을 사용하기 위해서는 JPAQuery 객체를 사용합니다.
+JPAQuery는 엔티티 매니저(EntitiyManager)를 활용해 생성합니다.
+이렇게 생성된 JPAQuery는 빌더 형식으로 쿼리를 작성합니다.
+빌더 메서드에서 확인할 수 있듯이 SQL쿼리에서 사용되는 키워드로 메서드가 구성돼 있습니다.
+그렇기 때문에 메소드를 활용해 좀 더 손 쉽게 코드를 작성할 수 있습니다.
+
+List 타입으로 값을 리턴받기 위해서는 fetch() 메서드를 사용해야하는데,
+먼약 4.0.1 버전의 QueryDSL을 설정한다면 list() 메서드를 사용해야 합니다.
+반환 메서드로 사용할수 있는 메서드는 다음과 같습니다.
+
+- List<T> fetch() : 조회 결괄르 리스트로 반환합니다.
+- T fetchOne : 단 건의 조회 결과를 반환합니다.
+- T fetchfirst() : 여러 건의 조회 결과 중 1건을 반환합니다. 내부 로직을 살펴보면 '.limit(1).fetchOne()'으로 구현돼 있습니다.
+- Long fetchCount() : 조회 결과 리스트와 개수를 포함한 QueryResults를 반환합니다.
+
+JPAQuery  객체를 사용해서 코드를 작성하는 방법 외에 다른 방법도 있습니다.
+JPAQueryfactory를 활용해서 작성한 코드입니다.
+
+```java
+@Test
+    void queryDslTest2() {
+        //given
+        JPAQueryFactory jpaQueryFactory = new JPAQueryFactory(entityManager);
+        QProduct qProduct = QProduct.product;
+
+        List<Product> productList = jpaQueryFactory.selectFrom(qProduct)
+                .where(qProduct.name.eq("펜"))
+                .orderBy(qProduct.price.asc())
+                .fetch();
+
+        for (Product product : productList) {
+            System.out.println("---------------");
+            System.out.println();
+            System.out.println("Product Number : " + product.getNumber());
+            System.out.println("Product Name : " + product.getName());
+            System.out.println("Product Price : " + product.getPrice());
+            System.out.println("Product Stock : " + product.getStock());
+            System.out.println();
+            System.out.println("---------------");
+        }
+    }
+```
+
+JPAQueryFactory를 활용해 쿼리를 작성했습니다.
+JPAQuery를 사용했을 때와 달리 JPAQueryFactory에서는 select 절부터 작성 가능합니다.
+만약 전체 칼럼을 조회하지 않고 일부만 조회하고 싶다면 다음과 같이 selectFrom()이 아닌 select()와 from() 메서드를 구분해서 사용하면 됩니다.
+
+JPAQueryFactory의 select()메서드 활용
+
+```java
+  @Test
+    void queryDslTest3() {
+        //given
+        JPAQueryFactory jpaQueryFactory = new JPAQueryFactory(entityManager);
+        QProduct qProduct = QProduct.product;
+
+        List<String> productList = jpaQueryFactory
+                .select(qProduct.name)
+                .from(qProduct)
+                .where(qProduct.name.eq("펜"))
+                .orderBy(qProduct.price.asc())
+                .fetch();
+
+        for (String product : productList) {
+            System.out.println("---------------");
+            System.out.println();
+            System.out.println("Product Name : " + product);
+            System.out.println("---------------");
+
+            List<Tuple> tupleList = jpaQueryFactory
+                    .select(qProduct.name, qProduct.price)
+                    .from(qProduct)
+                    .where(qProduct.name.eq("펜"))
+                    .orderBy(qProduct.price.asc())
+                    .fetch();
+
+            for (Tuple tuple : tupleList) {
+                System.out.println("---------------");
+                System.out.println("Product Name : " + tuple.get(qProduct.name));
+                System.out.println("Product Price : " + tuple.get(qProduct.price));
+                System.out.println("---------------");
+            }
+        }
+    }
+```
+
+위에 첫번째 예제는 select 대상이 하나인 경우입니다.
+만약 조회 대상이 여러개일 경우에는 두번째 예제와 같이 쉼표(,)로 구분해서 작성하면 되고,
+리턴 타입을 List<String> 타입이 아닌 List<Tuple> 타입으로 지정합니다.
+
+지금까지 테스트 코드를 활용해 QueryDSL의 기본 사용법을 소개했습니다.
+이제 QueryDSL을 실제 비즈니스 로직에서 활용할 수 있게 설정해 보겠습니다.
+
+QueryDSL 컨피그 파일 생성
+다음 작업은 이미 QueryDSL을 사용하기 위한 프로젝트 설정에서 처리한 작업이므로 생략하겠습니다.
+
+JPAQueryFactory 객체를 @Bean 객체로 등록해두면 앞에서 작성한 예제처럼 매번 JPAQueryFactory를 초기화하지 않고 스프링 컨테이너에서 가져다 쓸 수 있습니다. 이렇게 생성한 컨피그 클래스는 다음과 같이 사용할 수 있습니다.
+
+```java
+@Autowired
+    private JPAQueryFactory jpaQueryFactory;
+
+@Test
+    void queryDslTest4() {
+        //given
+        QProduct qProduct = QProduct.product;
+
+        List<String> productList = jpaQueryFactory
+                .select(qProduct.name)
+                .from(qProduct)
+                .where(qProduct.name.eq("펜"))
+                .orderBy(qProduct.price.asc())
+                .fetch();
+
+        for (String product : productList) {
+            System.out.println("---------------");
+            System.out.println("Product Nane : " + product);
+            System.out.println("---------------");
+        }
+    }
+```
+
+# QuerydslPredicateExecutor, QuerydslRepositorySupport 활용
+스프링 데이터 JPA에서는 QueryDSL을 더욱 편하게 사용할 수 있게 QuerydslPredicateExecutor 인터페이스와
+QuerydslRepositorySupport 클래스를 제공합니다. 이번 절에서는 이 두 클래스의 활용법을 살펴보겠습니다.
