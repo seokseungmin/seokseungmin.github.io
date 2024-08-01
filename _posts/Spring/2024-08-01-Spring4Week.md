@@ -976,3 +976,544 @@ queryDSLTest2와 같이 서술부만 가져다 사용할 수도 있습니다.
 
 지금까지 간단하게 QuerydslPredicateExecutor의 사용법을 알아봤습니다. QuerydslPredicateExecutor를
 활용하면 더욱 편하게 QueryDSL을 사용할 수 있지만 join이나 fetch 기능은 사용할 수 없다는 단점이 있습니다.
+
+# QuerydslRepositorySupport 추상 클래스 사용하기
+QuerydslRepository 클래스 역시 QueryDSL 라이브러리를 사용하는데 유용한 기능을 제공합니다.
+이번 절에서는 QuerydslRepositorySupport 클래스를 사용하는 여러 방법중 가장 일반적인 사용법을 소개하겠습니다.
+가장 보편적으로 사용하는 방식은 CustomRepository를 활용해 리포지토리를 구현하는 방식입니다.
+지금까지 예로 든 Product 엔티티를 활용하기 위한 객체들의 상속 구조를 살펴보면 다음과 같습니다.
+JpaRepository<T, ID>(Interface) <- ProductRepository(Interface) -> ProductRepositoryCustom(Interface)
+
+ProductRepositoryCustom(Interface) <- ProductRepositoryCustomImpl(Class) -> QuerydslRepositorySupport(Class)
+
+QuerydslRepositorySupport를 사용하기 위한 상속 구조
+
+여기서 JpaRepository와 QuerydslRepositorySupport는 Spring Data JPA에서 제공하는 인터페이스와 클래스입니다.
+나머지 ProductRepository와 ProductRepositoryCustom, ProductRepositoryCustomImpl은 직접 구현해야합니다.
+간단하게 구조를 설명하자면 다음과 같습니다.
+
+- 먼저 앞에서 사용했던 방식처럼 JpaRepository를 상속받는 ProductRepository를 생성합니다.
+- 이때 직접 구현한 쿼리를 사용하기 위해서는 JpaRepository를 상속받지 않는 리포지토리 인터페이스인
+ProductRepositoryCustom을 생성합니다. 이 인터페이스에 정의하고자 하는 기능들을 메서드로 정의합니다.
+- ProductRepositoryCustom에서 정의한 메서드를 사용하기 위해 ProductRepository에서 ProductRepositoryCustom을 상속 받습니다.
+
+- ProductRepositoryCustom에서 정의된 메서드를 기반으로 실제 쿼리 작성을 하기 위해 구현체인 ProductRepositoryCustomImpl 클래스를 생성합니다.
+- ProductRepositoryCustomImpl 클래스에서는 다양한 방법으로 쿼리를 구현할 수 있지만 QueryDSL을 사용하기 위해 QuerydslRepositorySupport를 상속받습니다.
+
+위와 같이 구성하면 DAO나 서비스에서 리포지토리에 접근하기 위해 ProductRepository를 사용합니다.
+ProductRepository를 활용함으로써 QueryDSL의 기능도 사용할 수 있게 됩니다.
+
+그럼 이전에 만들었던 인터페이스의 이름과 겹치지 않게 다음과 같이 repository 패키지 안에 support 패키지를 만들어서 그 안에서 구현하겠습니다.
+
+```java
+package com.springboot.advanced_jpa.data.repository.support;
+
+import com.springboot.advanced_jpa.data.entity.Product;
+
+import java.util.List;
+
+public interface ProductRepositoryCustom {
+
+    List<Product> findByName(String name);
+}
+```
+
+다음과 같이 인터페이스를 생성하고 쿼리로 구현하고자 하는 메서드를 저의하는 작업을 수행합니다.
+여기서는 간단하게 findByName()을 정의하고 사용해보겠습니다. ProductRepositoryCustom 인터페이스의
+구현체인 ProductRepositoryImpl 클래스를 다음과 같이 작성합니다.
+
+```java
+package com.springboot.advanced_jpa.data.repository.support;
+
+import com.springboot.advanced_jpa.data.entity.Product;
+import com.springboot.advanced_jpa.data.entity.QProduct;
+import org.springframework.data.jpa.repository.support.QuerydslRepositorySupport;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+
+@Component
+public class ProductRepositoryCustomImpl extends QuerydslRepositorySupport implements ProductRepositoryCustom {
+
+    public ProductRepositoryCustomImpl() {
+        super(Product.class);
+    }
+
+    public List<Product> findByName(String name) {
+        QProduct product = QProduct.product;
+
+        List<Product> productList = from(product)
+                .where(product.name.eq(name))
+                .select(product)
+                .fetch();
+
+        return productList;
+    }
+}
+```
+
+ProductRepositoryCustomImpl 클래스에서는 QueryDSL을 사용하기 위해 QuerydslRepositorySupport를 상속받고 생성한 ProductRepositoryCustom 인터페이스를 구현합니다.
+QuerydslRepositorySupport를 상속받으면 다음과 같이 생성자를 통해 도메인 클래스를 부모 클래스에 전달해야 합니다.
+그리고 인터페이스에 정의한 메서드를 구현합니다.
+이 과정에서 Q도메인 클래스인 QProduct를 사용해 QuerydslRepositorySupport가 제공하는 기능을 사용합니다.
+대표적인 예로 from() 메서드가 있습니다.
+from()메서드는 이름에서 유추할 수 있듯이 어떤 도메인에 접근할 것인지 지정하는 역할을 수행하고
+JPAQuery를 리턴합니다. 이 from()메서드에서는 생성한 QProduct의 이름을 매개변수로 사용합니다.
+그리고 차례대로 쿼리 키워드에 매핑되는 QueryDSL의 메서드를 사용해 쿼리를 생성하면 됩니다.
+
+여기서 기존에 Product 엔티티 클래스와 매핑해서 사용하던 ProductRepository가 있다면
+ProductRepositoryCustom을 상속받아 사용할 수 있습니다.
+
+```java
+package com.springboot.advanced_jpa.data.repository;
+
+
+import com.springboot.advanced_jpa.data.entity.Product;
+import com.springboot.advanced_jpa.data.repository.support.ProductRepositoryCustom;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.util.List;
+
+public interface ProductRepository extends JpaRepository<Product, Long>, ProductRepositoryCustom {
+    List<Product> findByName(String name);
+
+    List<Product> findByName(String name, Sort sort);
+
+    Page<Product> findByName(String name, Pageable pageable);
+
+    @Query("SELECT p FROM Product p WHERE p.name = :name")
+    List<Product> findByNameParam(@Param("name") String name);
+
+    @Query("SELECT p.name, p.price, p.stock FROM Product p WHERE p.name = :name")
+    List<Object[]> findByNameParam2(@Param("name") String name);
+}
+```
+
+위는 기존의 리포지토리를 그대로 사용해서 구현한 코드입니다.
+이 코드를 사용할 때는 ProductRepository만 이용하면 됩니다.
+기본적으로 JpaRepository에서 제공하는 메서드도 사용할 수 있고, 별도로 ProductRepositoryCustom
+인터페이스에서 정의한 메서드도 구현체를 통해 사용할 수 있습니다. 
+기본적인 CRUD 사용법은 앞에서 다뤘기 때문에 ProductRepositoryCustom 인터페이스에서 정의한findByName()
+메서드만 다음과 같이 호출해보겠습니다.
+이번 테스트 코드를 작성하기 위해 test/com.springboot.advanced_jpa/data/repository 패키지 내에
+support 패키지를 생성하고 ProductRepositoryTest 클래스를 생성합니다.
+(참고) 저는 대충 테스트 클래스를 생성해서 주소가 다를수 있습니다.
+
+```java
+package com.springboot.advanced_jpa.data.repository;
+
+import com.querydsl.core.Tuple;
+import com.querydsl.jpa.impl.JPAQuery;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.springboot.advanced_jpa.config.QueryDSLConfig;
+import com.springboot.advanced_jpa.data.entity.Product;
+import com.springboot.advanced_jpa.data.entity.QProduct;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
+
+
+@DataJpaTest
+// 기본값은  Replace.ANY, 이 경우 임베디드 메모리 데이터베이스를 사용.
+//  Replace.NONE으로 변경하면 애플리케이션에서 실제로 사용하는 데이터베이스로 테스트가 가능.
+@AutoConfigureTestDatabase(replace = Replace.NONE)
+@Import(QueryDSLConfig.class)
+public class ProductRepositoryTest {
+
+    @PersistenceContext
+    EntityManager entityManager;
+
+    @Autowired
+    private ProductRepository productRepository;
+
+    @Autowired
+    private JPAQueryFactory jpaQueryFactory;
+
+    @Test
+    void save() {
+        //given
+        Product product = new Product();
+        product.setName("펜");
+        product.setPrice(1000);
+        product.setStock(1000);
+
+        //when
+        Product savedProduct = productRepository.save(product);
+
+        //then
+        assertEquals(product.getName(), savedProduct.getName());
+        assertEquals(product.getPrice(), savedProduct.getPrice());
+        assertEquals(product.getStock(), savedProduct.getStock());
+    }
+
+    @Test
+    void sortingAndPagingTest() {
+        Product product1 = new Product();
+        product1.setName("펜");
+        product1.setPrice(1000);
+        product1.setStock(100);
+        product1.setCreatedAt(LocalDateTime.now());
+        product1.setUpdatedAt(LocalDateTime.now());
+
+        Product product2 = new Product();
+        product2.setName("펜");
+        product2.setPrice(5000);
+        product2.setStock(300);
+        product2.setCreatedAt(LocalDateTime.now());
+        product2.setUpdatedAt(LocalDateTime.now());
+
+        Product product3 = new Product();
+        product3.setName("펜");
+        product3.setPrice(500);
+        product3.setStock(50);
+        product3.setCreatedAt(LocalDateTime.now());
+        product3.setUpdatedAt(LocalDateTime.now());
+
+        productRepository.save(product1);
+        productRepository.save(product2);
+        productRepository.save(product3);
+
+        System.out.println(productRepository.findByName("펜", getSort()));
+
+        Page<Product> productPage = productRepository.findByName("펜", PageRequest.of(0, 2));
+        System.out.println(productPage.getContent());
+
+
+        List<Product> sortedProductsByParam = productRepository.findByNameParam("펜");
+        System.out.println("sortedProductsByParam : " + sortedProductsByParam);
+
+        List<Object[]> sortedProductsByParam2 = productRepository.findByNameParam2("펜");
+        System.out.println("sortedProductsByParam2 : " + sortedProductsByParam2);
+    }
+
+    private Sort getSort() {
+        return Sort.by(Sort.Order.asc("price"), Sort.Order.desc("stock"));
+    }
+
+    @Test
+    void queryDslTest() {
+        //given
+        JPAQuery<Product> query = new JPAQuery<>(entityManager);
+        QProduct qProduct = QProduct.product;
+
+        List<Product> productList = query
+                .from(qProduct)
+                .where(qProduct.name.eq("펜"))
+                .orderBy(qProduct.price.asc())
+                .fetch();
+
+        for (Product product : productList) {
+            System.out.println("---------------");
+            System.out.println("Product Number : " + product.getNumber());
+            System.out.println("Product Name : " + product.getName());
+            System.out.println("Product Price : " + product.getPrice());
+            System.out.println("Product Stock : " + product.getStock());
+            System.out.println();
+            System.out.println("---------------");
+        }
+    }
+
+    @Test
+    void queryDslTest2() {
+        //given
+        JPAQueryFactory jpaQueryFactory = new JPAQueryFactory(entityManager);
+        QProduct qProduct = QProduct.product;
+
+        List<Product> productList = jpaQueryFactory.selectFrom(qProduct)
+                .where(qProduct.name.eq("펜"))
+                .orderBy(qProduct.price.asc())
+                .fetch();
+
+        for (Product product : productList) {
+            System.out.println("---------------");
+            System.out.println();
+            System.out.println("Product Number : " + product.getNumber());
+            System.out.println("Product Name : " + product.getName());
+            System.out.println("Product Price : " + product.getPrice());
+            System.out.println("Product Stock : " + product.getStock());
+            System.out.println();
+            System.out.println("---------------");
+        }
+    }
+
+    @Test
+    void queryDslTest3() {
+        //given
+        JPAQueryFactory jpaQueryFactory = new JPAQueryFactory(entityManager);
+        QProduct qProduct = QProduct.product;
+
+        List<String> productList = jpaQueryFactory
+                .select(qProduct.name)
+                .from(qProduct)
+                .where(qProduct.name.eq("펜"))
+                .orderBy(qProduct.price.asc())
+                .fetch();
+
+        for (String product : productList) {
+            System.out.println("---------------");
+            System.out.println();
+            System.out.println("Product Name : " + product);
+            System.out.println("---------------");
+
+            List<Tuple> tupleList = jpaQueryFactory
+                    .select(qProduct.name, qProduct.price)
+                    .from(qProduct)
+                    .where(qProduct.name.eq("펜"))
+                    .orderBy(qProduct.price.asc())
+                    .fetch();
+
+            for (Tuple tuple : tupleList) {
+                System.out.println("---------------");
+                System.out.println("Product Name : " + tuple.get(qProduct.name));
+                System.out.println("Product Price : " + tuple.get(qProduct.price));
+                System.out.println("---------------");
+            }
+        }
+    }
+
+    @Test
+    void queryDslTest4() {
+        //given
+        QProduct qProduct = QProduct.product;
+
+        List<String> productList = jpaQueryFactory
+                .select(qProduct.name)
+                .from(qProduct)
+                .where(qProduct.name.eq("펜"))
+                .orderBy(qProduct.price.asc())
+                .fetch();
+
+        for (String product : productList) {
+            System.out.println("---------------");
+            System.out.println("Product Nane : " + product);
+            System.out.println("---------------");
+        }
+    }
+
+    @Test
+    void findByNameTest() {
+        List<Product> productList = productRepository.findByName("펜");
+
+        for (Product product : productList) {
+            System.out.println(product.getNumber());
+            System.out.println(product.getName());
+            System.out.println(product.getPrice());
+            System.out.println(product.getStock());
+        }
+    }
+
+    @Test
+    void auditingTest() {
+        Product product = new Product();
+        product.setName("펜");
+        product.setPrice(1000);
+        product.setStock(100);
+
+        Product savedProduct = productRepository.save(product);
+
+        System.out.println("productName : " + savedProduct.getName());
+        System.out.println("createdAt : " + savedProduct.getCreatedAt());
+    }
+}
+```
+
+리포지토리를 구성하면서 모든 로직을 구현했기 때문에 findByNameTest() 에서 findByName()메서드를 사용할 때는 위와 같이 간단하게 구현해서 사용할 수 있습니다.
+
+# [한걸음 더] JPA Auditing 적용
+JPA에서 'Audit' 이란 '감시하다'라는 뜻으로, 각 데이터마다 '누가', '언제' 데이터를 생성했고 변경했는지
+감시한다는 의미로 사용됩니다.
+앞에서 작성한 코드를 보면 알 수 있듯이 엔티티 크래스에는 공통적으로 들어가는 필드가 있습니다.
+예를 들면, '생성 일자'와 '변경 일자' 같은 것입니다. 대표적으로 많이 사용되는 필드는 다음과 같습니다.
+
+- 생성 주체
+- 생성 일자
+- 변경 주체
+- 변경 일자
+
+이러한 필드들은 매번 엔티티를 생성하거나 변경할 때마다 값을 주입해야 하는 번거로움이 있습니다.
+이 같은 번거로움을 해소하기 위해 Spring Data JPA에서는 이러한 값을 자동으로 넣어주는 기능을 제공합니다.
+더 진행하기에 앞서 이 기능은 꼭 추가해야 하는 기능은 아니지만 9장부터는 이 기능이 적용된 엔티티를 사용할 예정이므로 참고하기 바랍니다.
+
+## JPA Auditing 기능 활성화
+가장 먼저 스프링 부트 애플리케이션에 Auditing 기능을 활성화해야 합니다.
+방법은 간단합니다.
+main() 메서드가 있는 클래스에 다음과 같이 @EnableAuditing 어노테이션을 추가하면 됩니다.
+
+```java
+package com.springboot.advanced_jpa;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+
+@SpringBootApplication
+@EnableJpaAuditing
+public class AdvancedJpaApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(AdvancedJpaApplication.class, args);
+    }
+
+}
+```
+
+위와 같이 어노테이션을 추가하면 정상적으로 기능이 활성화되지만 앞으로 다룰 내용인 테스트 코드를 작성해서 애플리케이션을 테스트하는 일부 상황에서는 오류가 발생할 수 있습니다.
+예를 들면, @WebMvcTest 어노테이션을 지정해서 테스트를 수행하는 코드를 작성하면 애플리케이션 클래스를
+호출하는 과정에서 예외가 발생할 수 있습니다. 이 같은 문제를 해결하기 위해 다음과 같이 별도의 Configuration 클래스를 생성해서 애플리케이션 클래스의 기능과 분리해서 활성화할 수 있습니다.
+이 책에서는 이처럼 Configuration 클래스를 별도로 생성하는 방법을 권장합니다.
+
+```java
+package com.springboot.advanced_jpa.config;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+
+@Configuration
+@EnableJpaAuditing
+public class JpaAuditingConfiguration {
+}
+```
+
+참고로 다음과 같은 방법을 선택했다면 AdvancedJpaApplication에서 지정한 어노테이션은 지워야
+애플리케이션이 정상적으로 동작합니다.
+
+# BaseEntity 만들기
+코드의 중복을 없애기 위해서는 각 엔티티에 공통으로 들어가게 되는 칼럼(필드)을 하나의 클래스로
+빼는 작업을 수행해야 합니다(반드시 그래야 하는 것은 아니지만 자주 활용되는 기법이므로 참고해둘 필요가 있습니다). 아직 생성 주체와 변경 주체는 활용할 일이 없기 때문에 제외하고 먼저 생성 일자와 변경 일자만 추가해서 다음과 같이 BaseEntity를 생성합니다.
+
+```java
+package com.springboot.advanced_jpa.data.entity;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.MappedSuperclass;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDateTime;
+
+@Getter
+@Setter
+@ToString
+@MappedSuperclass
+@EntityListeners(AuditingEntityListener.class)
+public class BaseEntity {
+
+    @CreatedDate
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    private LocalDateTime updatedAt;
+}
+```
+
+여기서 사용한 주요 어노테이션은다음과 같습니다.
+
+- @MappedSuperClass: JPA의 엔티티 클래스가 상속받을 경우 자식 클래스에게 매핑 정보를 전달합니다.
+- @EntityListeners: 엔티티를 데이터베이스에 적용하기 전후로 콜백을 요청할 수 있게 하는 어노테이션입니다.
+- AuditingEntityListener: 엔티티의 Auditing 정보를 주입하는 JPA 엔티티 리스너 클래스입니다.
+- @CreateDate: 데이터 생성 날짜를 자동으로 주입하는 어노테이션입니다.
+- @LastmodifiedDate: 데이터 수정 날짜를 자동으로 주입하는 어노테이션입니다.
+
+위와 같이 BaseEntity를 생성하고 product 엔티티 클래스에서 공통 칼럼을 제거해서 다음과 같이 코드를 수정합니다.
+
+```java
+package com.springboot.advanced_jpa.data.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+@ToString(exclude = "name", callSuper = true)
+@Table(name = "product")
+public class Product extends BaseEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long number;
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false)
+    private Integer price;
+
+    @Column(nullable = false)
+    private Integer stock;
+
+}
+```
+
+클래스에 추가하는 어노테이션은 필요에 따라 차이가 있을 수 있으나 이 책에서는 실습을 위해 여러 어노테이션을 추가했습니다.
+그중 @ToString, @EqualsAndHashCode 어노테이션에 적용한 callSuper 속성은 롬복 설명에서 다뤘다시피
+부모 클래스의 필드를 포함하는 역할을 수행합니다.
+이렇게 설정하면 기존에 테스트했던 것처럼 매번 LocalDateTime.now() 메서드를 사용해 시간을 주입하지 않아도 자동으로 값이 생성되는 것을 볼 수 있습니다.
+다음과 같이 테스트 코드를 작성해서 실행합니다.
+
+```java
+  @Test
+    void auditingTest() {
+        Product product = new Product();
+        product.setName("펜");
+        product.setPrice(1000);
+        product.setStock(100);
+
+        Product savedProduct = productRepository.save(product);
+
+
+        System.out.println("productName : " + savedProduct.getName());
+        System.out.println("createdAt : " + savedProduct.getCreatedAt());
+    }
+```
+
+위 예제에서는 Product 엔티티에 생성일자를 입력하지 않은 상태에서 데이터베이스에 저장했습니다.
+출력된 결과는 다음과 같습니다.
+
+```
+productName : 펜
+createdAt : 2024-08-01T16:55:17.427259800
+```
+
+직접 일자를 기입하지 않았지만 정상적으로 데이터베이스에는 생성일자가 저장됐으며, 엔티티 필드를 출력해보면 해당 시간이 출력되는 것을 볼 수 있습니다.
+
+Tip
+JPA Auditing 기능에는 @CreateBy, @ModifiedBy 어노테이션도 존재합니다.
+누가 엔티티를 생성했고 수정했는지 자동으로 값을 주입하는 기능입니다.
+이 기능을 사용하려면 AuditorAware를 스프링 빈으로 등록할 필요가 있습니다.
+
+# 정리
+이번 장에서는 ORM의 개념을 알아보고 자바의 표준 ORM 기술 스펙인 JPA를 살펴봤습니다.
+데이터를 다루는 영역은 애플리케이션을 개발하면서 가장 중요한 부분입니다.
+대부분의 로직은 데이터를 가공해서 데이터베이스에 저장하거나 값을 효율적으로 가져오는 부분이 중요합니다.
+따라서 이번 장에서 다룬 기본기를 잘 다져보고 레퍼런스 문서도 살펴보면서 다양한 예제를 스스로 만들어 보는것이 중요합니다.
