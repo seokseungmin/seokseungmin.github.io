@@ -881,3 +881,98 @@ JPAQueryFactory 객체를 @Bean 객체로 등록해두면 앞에서 작성한 �
 # QuerydslPredicateExecutor, QuerydslRepositorySupport 활용
 스프링 데이터 JPA에서는 QueryDSL을 더욱 편하게 사용할 수 있게 QuerydslPredicateExecutor 인터페이스와
 QuerydslRepositorySupport 클래스를 제공합니다. 이번 절에서는 이 두 클래스의 활용법을 살펴보겠습니다.
+
+QuerydslPredicateExecutor 인터페이스 
+QuerydslPredicateExecutor는 JpaRepository와 함께 리포지토리에서 QueryDSL을 사용할 수 있게 인터페이스를 제공합니다.
+다음과 같이 생성한 리포지토리를 봅시다. 기존 리포지토리를 그대로 이용해도 되지만 예제를 구분하기 위해
+QProductRepository라는 이름의 클래스를 생성했습니다.
+
+QuerydslPredicate를 사용하는 리포지토리 생성
+
+```java
+package com.springboot.advanced_jpa.data.repository;
+
+import com.springboot.advanced_jpa.data.entity.Product;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.querydsl.QuerydslPredicateExecutor;
+
+public interface QProductRepository extends JpaRepository<Product, Long>,
+        QuerydslPredicateExecutor<Product> {
+}
+```
+
+QuerydslPredicateExecutor를 상속받도록 설정한 Product 엔티티에 대한 리포지토리입니다.
+QuerydslPredicateExecutor 인터페이스를 보면 다음과 같은 다양한 메서드를 제공합니다.
+
+Optional<T> findOne(Predicate predicate);
+Iterable<T> findAll(Predicate predicate);
+Iterable<T> findAll(Predicate predicate, Sort sort);
+Iterable<T> findAll(Predicate predicate, OrderSpecifier<?>... orders);
+Iterable<T> findAll(OrderSpecifier<?>... orders);
+Page<T> findAll(Predicate predicate, Pageable pageable);
+long count(Predicate predicate);
+boolean exists(Predicate predicate);
+
+보다시피 QuerydslPredicateExecutor 인터페이스의 메서드는 대부분 Predicate 타입을 매개변수로 받습니다.
+Predicate는 표현식을 작성할 수 있게 QueryDSL에서 제공하는 인터페이스입니다.
+QProductRepository에 대한 실습 코드를 작성하기 위해 test 디렉터리에 다음과 같이 QProductRepositoryTest 클래스를 생성합니다.
+
+```java
+package com.springboot.advanced_jpa.data.repository;
+
+import com.springboot.advanced_jpa.data.entity.Product;
+import com.springboot.advanced_jpa.data.entity.QProduct;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import java.util.Optional;
+
+@SpringBootTest
+class QProductRepositoryTest {
+
+    @Autowired
+    QProductRepository qProductRepository;
+
+    @Test
+    void queryDSLTest1() {
+        //given
+        BooleanExpression predicate = QProduct.product.name.containsIgnoreCase("펜")
+                .and(QProduct.product.price.between(1000, 2500));
+
+        Optional<Product> foundProduct = qProductRepository.findOne(predicate);
+
+        if (foundProduct.isPresent()) {
+            Product product = foundProduct.get();
+            System.out.println(product.getNumber());
+            System.out.println(product.getName());
+            System.out.println(product.getPrice());
+            System.out.println(product.getStock());
+        }
+    }
+
+    @Test
+       void queryDSLTest2() {
+        QProduct qProduct = QProduct.product;
+
+        Iterable<Product> productList = qProductRepository.findAll(qProduct.name.contains("펜")
+                .and(qProduct.price.between(500, 1500)));
+
+        for(Product product : productList){
+            System.out.println(product.getNumber());
+            System.out.println(product.getName());
+            System.out.println(product.getPrice());
+            System.out.println(product.getStock());
+        }
+    }
+}
+```
+
+predicate를 이용해 findOne() 메서드를 호출하는 방법 queryDSLTest1과 같습니다.
+predicate는 간단하게 표현식으로 정의하는 쿼리로 생각하면 됩니다.
+앞의 예제에서는 predicate를 명시적으로 정의하고 사용했지만 
+queryDSLTest2와 같이 서술부만 가져다 사용할 수도 있습니다.
+
+지금까지 간단하게 QuerydslPredicateExecutor의 사용법을 알아봤습니다. QuerydslPredicateExecutor를
+활용하면 더욱 편하게 QueryDSL을 사용할 수 있지만 join이나 fetch 기능은 사용할 수 없다는 단점이 있습니다.
