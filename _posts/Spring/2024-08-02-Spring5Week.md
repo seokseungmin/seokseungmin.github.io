@@ -1200,3 +1200,546 @@ Hibernate:
     where
         p1_0.id=?
 ```
+
+# 일대다 단방향 매핑
+앞에서 다대일 연관관계에서의 단방향과 양방향 매핑을 살펴봤습니다.
+이번에는 일대다 단방향 매핑 방법을 알아보겠습니다.
+참고로 일대다 양방향 매핑은 다루지 않을 예정입니다.
+그 이유는 @OneToMany를 사용하는 입장에서는 어느 엔티티 클래스도 연관관계의 주인이 될 수 없기 때문입니다.
+@OneToMany 관계에서 주인이 될 수 없는 이유는 이번 절에서 함께 다루겠습니다.
+먼저 실습을 위해 새로운 엔티티를 생성하겠습니다. 상품분류 테이블을 생성합니다.
+
+```java
+package com.springboot.relationship.data.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Getter
+@Setter
+@NoArgsConstructor
+@ToString
+@EqualsAndHashCode
+@Table(name = "category")
+public class Category {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(unique = true)
+    private String code;
+
+    private String name;
+
+    @OneToMany(fetch = FetchType.EAGER)
+    @JoinColumn(name = "category_id")
+    private List<Product> products = new ArrayList<>();
+}
+```
+
+위와 같이 상품 분류 엔티티 클래스를 생성하고 애플리케이션을 실행하면 상품분류 테아블이 생성되고
+상품 테이블에 외래키가 추가되는 것을 확인 할수 있습니다.
+
+상품 분류 엔티티에서 @OneTOMany와 @JoinColumn을 사용하면 상품 엔티티에서 별도의 설정을 하지 않아도
+일대다 단방향 연관관계가 매핑됩니다. 
+앞에서 언급한 것처럼 @JoinColumn 어노테이션은 필수 사항은 아닙니다.
+이 어노테이션을 사용하지 않으면 중간 테이블로 Join테이블이 생성되는 전략이 채택됩니다.
+지금 같은 일대다 단방향 관계의 단점은 매핑의 주체가 아닌 반대 테이블에 외래키가 추가되다는 점입니다.
+이 방식은 다대일 구조와 다르게 외래키를 설정하기 위해 다른 테이블에 대한 update쿼리를 발생시킵니다.
+테스트를 통해 확인해 보겠습니다.
+
+ CategoryRepository를 활용한 테스트
+
+ ```java
+package com.springboot.relationship.data.repository;
+
+import com.springboot.relationship.data.entity.Category;
+import com.springboot.relationship.data.entity.Product;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import java.util.List;
+
+@SpringBootTest
+class CategoryRepositoryTest {
+
+    @Autowired
+    ProductRepository productRepository;
+
+    @Autowired
+    CategoryRepository categoryRepository;
+
+    @Test
+    void relationshipTest() {
+        // 테스트 데이터 생성
+        Product product = new Product();
+        product.setName("펜");
+        product.setPrice(2000);
+        product.setStock(100);
+
+        productRepository.save(product);
+
+        Category category = new Category();
+        category.setCode("S1");
+        category.setName("도서");
+        category.getProducts().add(product);
+
+        categoryRepository.save(category);
+
+        // 테스트 코드
+        List<Product> products = categoryRepository.findById(1L).get().getProducts();
+
+        for (Product foundProduct : products) {
+            System.out.println(foundProduct);
+        }
+    }
+
+}
+```
+
+테스트 데이터 생성을 위해 ProductRepository의 의존성도 함께 주입받겠습니다.
+Product 객체를 Category에서 생성한 리스트 객체에 추가해서 연관관계를 설정합니다.
+
+우선  
+
+``` 
+  Product product = new Product();
+        product.setName("펜");
+        product.setPrice(2000);
+        product.setStock(100);
+
+        productRepository.save(product);
+
+        Category category = new Category();
+        category.setCode("S1");
+        category.setName("도서");
+        category.getProducts().add(product);
+
+        categoryRepository.save(category);
+```
+
+다음 코드에서의 데이터 생성 쿼리는 다음과 같이 생성됩니다.
+
+```
+Hibernate: 
+    insert 
+    into
+        product
+        (created_at, name, price, provider_id, stock, updated_at) 
+    values
+        (?, ?, ?, ?, ?, ?) 
+    returning number
+Hibernate: 
+    insert 
+    into
+        category
+        (code, name) 
+    values
+        (?, ?) 
+    returning id
+Hibernate: 
+    update
+        product 
+    set
+        category_id=? 
+    where
+        number=?
+```
+
+일대다 연관관게에서는 위와 같이 연관관계 설정을 위한 update 쿼리가 발생합니다.
+이 같은 문제를 해결하기 위해서는 일대다 양방향 연관관계를 사용하기보다는 다대일 연관관계를 사용하는 것이 좋습니다.
+이렇게 테스트 데이터를 생성한 뒤에 CategoryRepository를 활용해 상품정보를 가져오는 테스트 코드를 실행하면 다음과 같은 쿼리가 생성됩니다.
+
+```
+Hibernate: 
+    select
+        c1_0.id,
+        c1_0.code,
+        c1_0.name,
+        p1_0.category_id,
+        p1_0.number,
+        p1_0.created_at,
+        p1_0.name,
+        p1_0.price,
+        pd1_0.id,
+        pd1_0.created_at,
+        pd1_0.description,
+        pd1_0.updated_at,
+        p2_0.id,
+        p2_0.created_at,
+        p2_0.name,
+        p2_0.updated_at,
+        p1_0.stock,
+        p1_0.updated_at 
+    from
+        category c1_0 
+    left join
+        product p1_0 
+            on c1_0.id=p1_0.category_id 
+    left join
+        product_detail pd1_0 
+            on p1_0.number=pd1_0.product_number 
+    left join
+        provider p2_0 
+            on p2_0.id=p1_0.provider_id 
+    where
+        c1_0.id=?
+```
+
+일대다 연관관계에서는 이처럼 category와 product의 조인이 발생해서 상품 데이터를 정상적으로 가져옵니다.
+
+# 다대다 매핑
+다대다(M:N) 연관관계는 실무에서 거의 사용되지 않는 구성입니다.
+다대다 연관관계를 상품과 생산업체의 예로 들자면 한 종류의 상품이 여러 생산업체를 통해 생산될 수 있고,
+생산업체 한 곳이 여러 상품을 생산할 수도 있습니다.
+다대다 연관관계에서는 각 엔티티에서 서로를 리스트로 가지는 구조가 만들어집니다.
+이런 경우에는 교차 엔티티라고 부르는 중간 테이블을 생성해서 다대다 관계를 일대다 또는 다대일 관게로 해소합니다.
+
+# 다대다 단방향 매핑
+생산업체에 매핑되는 도메인은 Producer라고 가정하고 작성합니다.
+
+```java
+package com.springboot.relationship.data.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Getter
+@Setter
+@NoArgsConstructor
+@ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+@Table(name = "producer")
+public class Producer extends BaseEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String code;
+
+    private String name;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @ToString.Exclude
+    private List<Product> products = new ArrayList<>();
+
+    public void addProduct(Product product) {
+        products.add(product);
+    }
+}
+```
+
+상품 엔티티에 적용한 것과 같이 다대다 연관관계는 @ManyToMany 어노테이션으로 설정합니다.
+리스트로 필드를 가지는 객체에서는 외래키를 가지지 않기 때문에 별도의 @JoinColumn은 설정하지 않아도 됩니다.
+이렇게 엔티티를 생성하고 애플리케이션을 실행하면 생산업체 테이블이 생성됩니다.
+
+생산업체 테이블에는 별도의 외래키가 추가되지 않은 것을 볼 수 있습니다.
+그리고 데이터베이스에 추가로 중간 테이블이 생성돼 있습니다.
+
+별도의 설정을 하지 않았다면 테이블은 producer_products라는 이름으로 설정되며, 만약 테이블의 이름을 관리하고 싶다면 @ManyToMany 어노테이션 아래에 @JoinTable(name = "이름")의 형식으로 어노테이션을 정의하면 됩니다.
+producer_products 테이블의 경우 상품 테이블과 생산업체 테이블에서 id값을 가져와 두 개의 외래키가 설정되는 것을 볼 수 있습니다.
+그럼 이러한 연관관계를 테스트하기 위해 다음과 같이 생산업체 엔티티에 대한 리포지토리를 생성해보겠습니다.
+
+
+```java
+package com.springboot.relationship.data.repository;
+
+import com.springboot.relationship.data.entity.Producer;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface ProducerRepository extends JpaRepository<Producer, Long> {
+}
+```
+
+이 같은 리포지토리를 생성하면 생산업체에 대한 기본적인 데이터베이스 조작이 가능합니다.
+그럼 다음과 같이 테스트코드를 작성해서 앞에서 설정한 연관관계가 정상적으로 동작하는지 확인하겠습니다.
+
+```java
+package com.springboot.relationship.data.repository;
+
+import com.springboot.relationship.data.entity.Producer;
+import com.springboot.relationship.data.entity.Product;
+import org.assertj.core.util.Lists;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class ProducerRepositoryTest {
+
+    @Autowired
+    ProducerRepository producerRepository;
+
+    @Autowired
+    ProductRepository productRepository;
+
+    @Test
+    void relationshipTest() {
+
+        Product product1 = saveProduct("동글펜", 500, 1000);
+        Product product2 = saveProduct("네모 공책", 152, 1234);
+        Product product3 = saveProduct("지우개", 152, 1234);
+
+        Producer producer1 = saveProducer("flature");
+        Producer producer2 = saveProducer("wikibooks");
+
+        producer1.addProduct(product1);
+        producer1.addProduct(product2);
+
+        producer2.addProduct(product2);
+        producer2.addProduct(product3);
+
+        producerRepository.saveAll(Lists.newArrayList(producer1, producer2));
+
+        System.out.println(producerRepository.findById(1L).get().getProducts());
+    }
+
+    private Product saveProduct(String name, Integer price, Integer stock) {
+        Product product = new Product();
+        product.setName(name);
+        product.setPrice(price);
+        product.setStock(stock);
+
+        return productRepository.save(product);
+    }
+
+    private Producer saveProducer(String name) {
+        Producer producer = new Producer();
+        producer.setName(name);
+        return producerRepository.save(producer);
+    }
+}
+```
+
+위 예제에서는 가독성을 위해 리포지토리를 통해 테스트 데이터를 생성하는 부분을 별도 메소드로 구현했습니다.
+이 경우 리포지토리를 사용하게 되면 매번 트랜잭션이 끊어져 생산업체 엔티티에서 상품 리스트를 가져오는 작업이 불가능합니다.
+이 같은 문제를 해소하기 위해 테스트 메서드에 @Transactional 어노테이션을 지정해 트랜잭션이 유지되도록 구성해서 테스트를 진행합니다.
+
+System.out.println(producerRepository.findById(1L).get().getProducts());
+다음 코드 줄의 생산업체 엔티티와 연관관계가 설정된 상품 데이터 리스트를 출력하면 다음과 같은 내용이 출력됩니다.
+
+```
+[Product(super=BaseEntity(createdAt=2024-08-02T11:05:13.494866, updatedAt=2024-08-02T11:05:13.494866), number=1, name=동글펜, price=500, stock=1000), Product(super=BaseEntity(createdAt=2024-08-02T11:05:13.578875, updatedAt=2024-08-02T11:05:13.578875), number=2, name=네모 공책, price=152, stock=1234)]
+```
+
+
+앞서
+
+```
+producer1.addProduct(product1);
+producer1.addProduct(product2);
+
+producer2.addProduct(product2);
+producer2.addProduct(product3);
+```
+
+연관관계를 설정했기 때문에 정상적으로 생산업체 엔티티에서 상품 리스트를 가져오는 것을 볼 수 있습니다.
+앞의 테스트를 통해 테스트 데이터를 생성하면 product 테이블과 producer 테이블에 레코드가 추가되지만 보여지는
+내용만으로는 연관관계 설정 여부를 확인하기 어렵습니다.
+그 이유는 다대다 연관관계 설정을 통해 생성된 중간 테이블에 연관관계 매핑이 돼 있기 때문입니다.
+중간 테이블에 생성된 레코드를 확인하면 다음과 같습니다.
+
+producer_products라는 이름의 중간 테이블에는
+
+```
+producer1.addProduct(product1);
+producer1.addProduct(product2);
+
+producer2.addProduct(product2);
+producer2.addProduct(product3);
+```
+에서 설정한 연관관계에 맞춰 양 테이블의 기본키를 매핑한 레코드가 생성된 것을 볼 수 있습니다.
+
+# 다대다 양방향 매핑
+다대다 단방향 매핑의 개념을 이해했다면 양방향 매핑을 하는 방법은 간단합니다.
+상품 엔티티에서 다음과 같이 작성합니다.
+
+```java
+package com.springboot.relationship.data.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+@Table(name = "product")
+public class Product extends BaseEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long number;
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false)
+    private Integer price;
+
+    @Column(nullable = false)
+    private Integer stock;
+
+    @OneToOne(mappedBy = "product")
+    @ToString.Exclude
+    private ProductDetail productDetail;
+
+    @ManyToOne
+    @JoinColumn(name = "provider_id")
+    @ToString.Exclude
+    private Provider provider;
+
+
+    @ManyToMany
+    @Builder.Default
+    @ToString.Exclude
+    private List<Producer> producers = new ArrayList<>();
+
+    public void addProducer(Producer producer) {
+        this.producers.add(producer);
+    }
+}
+```
+
+이 예제에서 
+
+```
+@ManyToMany
+@ToString.Exclude
+private List<Producer> producers = new ArrayList<>();
+```
+다음은 생산업체에 대한 다대다 연관관계를 설정합니다.
+필요에 따라 mappedBy 속성을 사용해 두 엔티티 간 연관관계의 주인을 설정할 수도 있습니다.
+이렇게 설정한 후 애플리케이션을 실행하면 데이터베이스의 테이블 구조는 변경되지 않습니다.
+중간 테이블이 연관관게를 설정하고 있기 때문입니다.
+
+```java
+package com.springboot.relationship.data.repository;
+
+import com.springboot.relationship.data.entity.Producer;
+import com.springboot.relationship.data.entity.Product;
+import org.assertj.core.util.Lists;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class ProducerRepositoryTest {
+
+    @Autowired
+    ProducerRepository producerRepository;
+
+    @Autowired
+    ProductRepository productRepository;
+
+    @Test
+    void relationshipTest() {
+
+        Product product1 = saveProduct("동글펜", 500, 1000);
+        Product product2 = saveProduct("네모 공책", 152, 1234);
+        Product product3 = saveProduct("지우개", 152, 1234);
+
+        Producer producer1 = saveProducer("flature");
+        Producer producer2 = saveProducer("wikibooks");
+
+        producer1.addProduct(product1);
+        producer1.addProduct(product2);
+
+        producer2.addProduct(product2);
+        producer2.addProduct(product3);
+
+        producerRepository.saveAll(Lists.newArrayList(producer1, producer2));
+
+        System.out.println(producerRepository.findById(1L).get().getProducts());
+    }
+
+    @Test
+    @Transactional
+    void relationshipTest2() {
+        Product product1 = saveProduct("동글펜", 500, 1000);
+        Product product2 = saveProduct("네모 공책", 152, 1234);
+        Product product3 = saveProduct("지우개", 152, 1234);
+
+        Producer producer1 = saveProducer("flature");
+        Producer producer2 = saveProducer("wikibooks");
+
+        producer1.addProduct(product1);
+        producer1.addProduct(product2);
+        producer2.addProduct(product2);
+        producer2.addProduct(product3);
+
+        product1.addProducer(producer1);
+        product2.addProducer(producer1);
+        product2.addProducer(producer2);
+        product3.addProducer(producer2);
+
+        producerRepository.saveAll(Lists.newArrayList(producer1, producer2));
+        productRepository.saveAll(Lists.newArrayList(product1, product2, product3));
+
+        System.out.println("products : " + producerRepository.findById(1L).get().getProducts());
+        System.out.println("produccers : " + productRepository.findById(1L).get().getProducers());
+    }
+
+    private Product saveProduct(String name, Integer price, Integer stock) {
+        Product product = new Product();
+        product.setName(name);
+        product.setPrice(price);
+        product.setStock(stock);
+
+        return productRepository.save(product);
+    }
+
+    private Producer saveProducer(String name) {
+        Producer producer = new Producer();
+        producer.setName(name);
+        return producerRepository.save(producer);
+    }
+}
+```
+
+여기에 양방향 연관관계 설정을 위해 
+
+```
+product1.addProducer(producer1);
+product2.addProducer(producer1);
+product2.addProducer(producer2);
+product3.addProducer(producer2);
+```
+
+연관관계 설정 코드를 추가했습니다.
+연관관계를 설정하고 아래의 줄처럼
+
+```
+System.out.println("products : " + producerRepository.findById(1L).get().getProducts());
+System.out.println("produccers : " + productRepository.findById(1L).get().getProducers());
+```
+
+각 엔티티에 연관된 엔티티를 출력하면 다음과 같이 정상적으로 출력되는 것을 볼 수 있습니다.
+
+```
+
+```
+
+이렇게 다대다 연관관계를 설정하면 중간 테이블을 통해 연관된 엔티티의 값을 가져올 수 있습니다.
+다만 다대다 연관관계에서는 중간 테이블이 생성되기 때문에 예기치 못한 쿼리가 생길 수 있습니다.
+즉, 관리하기 힘든 포인트가 발생한다는 문제가 있습니다.
+그렇기 때문에 이러한 다대다 연관관계의 한계를 극복하기 위해서는 중간 테이블을 생성하는 대신 일대다 다대일로
+연관관계를 맺을 수 있는 중간 엔티티로 승격시켜 JPA에서 관리할 수 있게 생성하는 것이 좋습니다.
