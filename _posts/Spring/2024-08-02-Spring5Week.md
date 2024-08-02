@@ -1577,9 +1577,7 @@ import java.util.List;
 @Entity
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
-@AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @Table(name = "product")
@@ -1609,7 +1607,6 @@ public class Product extends BaseEntity {
 
 
     @ManyToMany
-    @Builder.Default
     @ToString.Exclude
     private List<Producer> producers = new ArrayList<>();
 
@@ -1735,7 +1732,8 @@ System.out.println("produccers : " + productRepository.findById(1L).get().getPro
 각 엔티티에 연관된 엔티티를 출력하면 다음과 같이 정상적으로 출력되는 것을 볼 수 있습니다.
 
 ```
-
+products : [Product(super=BaseEntity(createdAt=2024-08-02T17:26:51.403504400, updatedAt=2024-08-02T17:26:51.403504400), number=1, name=동글펜, price=500, stock=1000), Product(super=BaseEntity(createdAt=2024-08-02T17:26:51.465854, updatedAt=2024-08-02T17:26:51.465854), number=2, name=네모 공책, price=152, stock=1234)]
+producers : [Producer(super=BaseEntity(createdAt=2024-08-02T17:26:51.469858600, updatedAt=2024-08-02T17:26:51.469858600), id=1, code=null, name=flature)]
 ```
 
 이렇게 다대다 연관관계를 설정하면 중간 테이블을 통해 연관된 엔티티의 값을 가져올 수 있습니다.
@@ -1743,3 +1741,796 @@ System.out.println("produccers : " + productRepository.findById(1L).get().getPro
 즉, 관리하기 힘든 포인트가 발생한다는 문제가 있습니다.
 그렇기 때문에 이러한 다대다 연관관계의 한계를 극복하기 위해서는 중간 테이블을 생성하는 대신 일대다 다대일로
 연관관계를 맺을 수 있는 중간 엔티티로 승격시켜 JPA에서 관리할 수 있게 생성하는 것이 좋습니다.
+
+# 영속성 전이
+영속성 전이 (cascade)란 특정 엔티티의 영속성 상태를 변경할 때 그 엔티티와 연관된 엔티티의 영속성에도 영향을 미쳐 영속성 상태를 변경하는 것을 의미합니다.
+예를 들어 @OneTOMany 어노테이션의 인터페이스를 살펴보면 다음과 같습니다.
+
+```java
+public @interface OneToMany {
+    Class targetEntity() default void.class;
+
+    CascadeType[] cascade() default {};
+
+    FetchType fetch() default FetchType.LAZY;
+
+    String mappedBy() default "";
+
+    boolean orphanRemoval() default false;
+}
+```
+
+연관관계와 관련된 어노테이션을 보면 위와 같이 cascade()라는 요소를 볼 수 있습니다.
+이 어노테이션은 영속성 전이를 설정하는데 활용됩니다.
+cascase() 요소와 함께 사용하는 영속성 전이 타입은 다음과 같습니다.
+
+영속성 전이 타입의 종류
+
+| 종류     | 설명                                                                                         |
+|----------|----------------------------------------------------------------------------------------------|
+| ALL      | 모든 영속 상태 변경에 대해 영속성 전이를 적용                                                 |
+| PERSIST  | 엔티티가 영속화할 때 연관된 엔티티도 함께 영속화                                              |
+| MERGE    | 엔티티를 영속성 컨텍스트에 병합할 때 연관된 엔티티도 병합                                     |
+| REMOVE   | 엔티티를 제거할 때 연관된 엔티티도 제거                                                       |
+| REFRESH  | 엔티티를 새로고침할 때 연관된 엔티티도 새로고침                                               |
+| DETACH   | 엔티티를 영속성 컨텍스트에서 제외하면 연관된 엔티티도 제외                                    |
+
+여기서 알 수 있듯이 영속성 전이에 사용되는 타입은 엔티티 생명주기와 연관이 있습니다.
+한 엔티티가 표와 같이 casecade 요소의 값으로 주어진 영속 상태의 변경이 일어나면 매핑으로 연관된
+엔티티에도 동일한 동작이 일어나도록 전이를 발생시키는 것입니다.
+위의 코드를 보면 casecade() 요소의 리턴 타입은 배열 형식인 것을 볼 수 있습니다.
+이 말은 개발자가 사용하고자 하는  cascade 타입을 골라 각 상황에 적용할 수 있다는 것입니다.
+
+# 영속성 전이 적용
+이제 영속성 전이를 적용해 보겠습니다.
+여기서 사용할 엔티티는 상품 엔티티와 공급업체 엔티티입니다.
+예를 들어, 한 가게가 새로운 공급업체와 계약하며 몇 가지 새 상품을 입고시키는 상황에 어떻게 영속성 전이가 적용되는지 살펴보겠습니다.
+우선 엔티티를 데이터베이스에 추가하는 경우로 영속성 전이 타입으로 PERSIST를 지정하겠습니다.
+먼저 공급업체 엔티티에 다음과 같이 영속성전이 타입을 설정합니다.
+
+```java
+package com.springboot.relationship.data.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Getter
+@Setter
+@NoArgsConstructor
+@ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+@Table(name = "provider")
+public class Provider extends BaseEntity{
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+
+    @OneToMany(mappedBy = "provider", fetch = FetchType.EAGER, cascade = CascadeType.PERSIST, orphanRemoval = true)
+    @ToString.Exclude
+    private List<Product> productList = new ArrayList<>();
+}
+```
+
+영속성 전이 타입을 설정하기 위해서는 @OneTOMany 어노테이션 속성을 활용합니다.
+이렇게 설정한 후에 다음과 같이 코드를 작성합니다.
+
+```java
+package com.springboot.relationship.data.repository;
+
+import com.springboot.relationship.data.entity.Product;
+import com.springboot.relationship.data.entity.Provider;
+import org.assertj.core.util.Lists;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import java.util.List;
+
+@SpringBootTest
+class ProviderRepositoryTest {
+
+    @Autowired
+    ProductRepository productRepository;
+
+    @Autowired
+    ProviderRepository providerRepository;
+
+    @Test
+    void relationshipTest1() {
+        // 테스트 데이터 생성
+        Provider provider = new Provider();
+        provider.setName("oo 물산");
+
+        providerRepository.save(provider);
+
+        Product product = new Product();
+        product.setName("가위");
+        product.setPrice(5000);
+        product.setStock(500);
+        product.setProvider(provider);
+
+        productRepository.save(product);
+
+        System.out.println("product : " + productRepository.findById(1L).orElseThrow(RuntimeException::new));
+
+        System.out.println("provider : " + productRepository.findById(1L).orElseThrow(RuntimeException::new).getProvider());
+    }
+
+    @Test
+    void relationshipTest() {
+        //테스트 데이터 생성
+        Provider provider = new Provider();
+        provider.setName("oo 상사");
+
+        providerRepository.save(provider);
+
+        Product product1 = new Product();
+        product1.setName("펜");
+        product1.setPrice(2000);
+        product1.setStock(100);
+        product1.setProvider(provider);
+
+        Product product2 = new Product();
+        product2.setName("가방");
+        product2.setPrice(20000);
+        product2.setStock(200);
+        product2.setProvider(provider);
+
+        Product product3 = new Product();
+        product3.setName("노트");
+        product3.setPrice(3000);
+        product3.setStock(100);
+        product3.setProvider(provider);
+
+        productRepository.save(product1);
+        productRepository.save(product2);
+        productRepository.save(product3);
+
+        List<Product> productList = providerRepository.findById(provider.getId()).get().getProductList();
+
+        for (Product product : productList) {
+            System.out.println(product);
+        }
+    }
+
+    @Test
+    void cascadeTest() {
+        Provider provider = saveProvider("새로운 공급업체");
+
+        Product product1 = saveProduct("상품1", 1000, 1000);
+        Product product2 = saveProduct("상품2", 500, 1500);
+        Product product3 = saveProduct("상품3", 750, 500);
+
+        product1.setProvider(provider);
+        product2.setProvider(provider);
+        product3.setProvider(provider);
+
+        provider.getProductList().addAll(Lists.newArrayList(product1, product2, product3));
+
+        providerRepository.save(provider);
+    }
+
+    private Provider saveProvider(String name) {
+        Provider provider = new Provider();
+        provider.setName(name);
+        return providerRepository.save(provider);
+    }
+
+    private Product saveProduct(String name, Integer price, Integer stock) {
+        Product product = new Product();
+        product.setName(name);
+        product.setPrice(price);
+        product.setStock(stock);
+        return productRepository.save(product);
+    }
+
+    @Test
+    void orphanRemovalTest() {
+
+        Provider provider = saveProvider("새로운 공급업체");
+
+        Product product1 = saveProduct("상품1", 1000, 1000);
+        Product product2 = saveProduct("상품2", 500, 1500);
+        Product product3 = saveProduct("상품3", 750, 500);
+
+        product1.setProvider(provider);
+        product2.setProvider(provider);
+        product3.setProvider(provider);
+
+        provider.getProductList().addAll(Lists.newArrayList(product1, product2, product3));
+
+        providerRepository.saveAndFlush(provider);
+
+        providerRepository.findAll().forEach(System.out::println);
+        productRepository.findAll().forEach(System.out::println);
+
+        Provider foundProvider = providerRepository.findById(1L).get();
+
+        // 리스트가 비어 있지 않은지 확인
+        if (!foundProvider.getProductList().isEmpty()) {
+            foundProvider.getProductList().remove(0);
+        }
+
+        providerRepository.findAll().forEach(System.out::println);
+        productRepository.findAll().forEach(System.out::println);
+    }
+}
+```
+
+
+테스트를 수행하기 위해 다음과 같이 공급업체 하나와 상품 객체를 3개 생성합니다.
+영속성 전이를 테스트하기 위해 객체에는 영속화 작업을 수행하지 않고
+
+```
+product1.setProvider(provider);
+product2.setProvider(provider);
+product3.setProvider(provider);
+
+provider.getProductList().addAll(Lists.newArrayList(product1, product2, product3));
+```
+다음과 같이 연관관계만 설정합니다.
+영속성 전이가 수행되는 부분은 제일 마지막줄 코드입니다.
+마지막줄 코드에서 데이터베이스에 저장하는 쿼리를 보면 다음과 같습니다.
+
+```
+Hibernate: 
+    insert 
+    into
+        provider
+        (created_at, name, updated_at) 
+    values
+        (?, ?, ?) 
+    returning id
+Hibernate: 
+    insert 
+    into
+        product
+        (created_at, name, price, provider_id, stock, updated_at) 
+    values
+        (?, ?, ?, ?, ?, ?) 
+    returning number
+Hibernate: 
+    insert 
+    into
+        product
+        (created_at, name, price, provider_id, stock, updated_at) 
+    values
+        (?, ?, ?, ?, ?, ?) 
+    returning number
+Hibernate: 
+    insert 
+    into
+        product
+        (created_at, name, price, provider_id, stock, updated_at) 
+    values
+        (?, ?, ?, ?, ?, ?) 
+    returning number
+```
+
+지금까지는 엔티티를 데이터베이스에 저장하기 위해 각 엔티티를 저장하는 코드를 작성해야 했습니다.
+하지만 영속성 전이를 사용하면 부모 엔티티티가 되는 Provider 엔티티만 저장하면 코드에 작성돼 있는
+Cascade.PERSIST에 맞춰 상품 엔티티도 함께 저장할 수 있습니다.
+
+이처럼 특정 상황에 맞춰 영속성 전이 타입을 설정하면 영속 상태의 변화에 따라 연관된 엔티티들의 동작도 함께 수행할 수 있어 개발의 생산성이 높아집니다.
+다만 자동 설정으로 동작하는 코드들이 정확히 어떤 영향을 미치는지 파악할 필요가 있습니다.
+예를 들어, REMOVE와 REMOVE를 포함하는 ALL 같은 타입을 무분별하게 사용하면 연관된 엔티티가 의도치 않게
+모두 삭제될 수 있기 때문에 다른 타입보다 더욱 사이드 이펙트(side effect)를 고려해서 사용해야 합니다.
+
+# 고아 객체
+JPA에서 고아(Orphan)란 부모 엔티티와 연관관계가 끊어진 엔티티를 의미합니다.
+JPA에는 이러한 고아 객체를 자동으로 제거하는 기능이 있습니다.
+물론 자식 엔티티가 다른 엔티티와 연관관계를 가지고 있다면 이 기능은 사용하지 않는 것이 좋습니다.
+현재 예제에서 사용되는 상품 엔티티는 다른 엔티티와 연관관계가 많이 설정돼 있지만 그 부분은 예외로 두고 테스트를 진행하겠습니다.
+
+고아 객체를 제거하는 기능을 사용하기 위해서는 공급업체 엔티티를 다음과 같이 작성합니다.
+
+```java
+package com.springboot.relationship.data.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Getter
+@Setter
+@NoArgsConstructor
+@ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+@Table(name = "provider")
+public class Provider extends BaseEntity{
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+
+    @OneToMany(mappedBy = "provider", fetch = FetchType.EAGER, cascade = CascadeType.PERSIST, orphanRemoval = true)
+    @ToString.Exclude
+    private List<Product> productList = new ArrayList<>();
+}
+```
+
+orphanRemoval = true 속성은 고아 객체를 제거하는 기능입니다.
+이 설정을 추가하고 정상적으로 동작하는지 확인하기 위해 다음과 같이 테스트 코드를 작성합니다.
+
+
+```java
+package com.springboot.relationship.data.repository;
+
+import com.springboot.relationship.data.entity.Product;
+import com.springboot.relationship.data.entity.Provider;
+import org.assertj.core.util.Lists;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import java.util.List;
+
+@SpringBootTest
+class ProviderRepositoryTest {
+
+    @Autowired
+    ProductRepository productRepository;
+
+    @Autowired
+    ProviderRepository providerRepository;
+
+    @Test
+    void relationshipTest1() {
+        // 테스트 데이터 생성
+        Provider provider = new Provider();
+        provider.setName("oo 물산");
+
+        providerRepository.save(provider);
+
+        Product product = new Product();
+        product.setName("가위");
+        product.setPrice(5000);
+        product.setStock(500);
+        product.setProvider(provider);
+
+        productRepository.save(product);
+
+        System.out.println("product : " + productRepository.findById(1L).orElseThrow(RuntimeException::new));
+
+        System.out.println("provider : " + productRepository.findById(1L).orElseThrow(RuntimeException::new).getProvider());
+    }
+
+    @Test
+    void relationshipTest() {
+        //테스트 데이터 생성
+        Provider provider = new Provider();
+        provider.setName("oo 상사");
+
+        providerRepository.save(provider);
+
+        Product product1 = new Product();
+        product1.setName("펜");
+        product1.setPrice(2000);
+        product1.setStock(100);
+        product1.setProvider(provider);
+
+        Product product2 = new Product();
+        product2.setName("가방");
+        product2.setPrice(20000);
+        product2.setStock(200);
+        product2.setProvider(provider);
+
+        Product product3 = new Product();
+        product3.setName("노트");
+        product3.setPrice(3000);
+        product3.setStock(100);
+        product3.setProvider(provider);
+
+        productRepository.save(product1);
+        productRepository.save(product2);
+        productRepository.save(product3);
+
+        List<Product> productList = providerRepository.findById(provider.getId()).get().getProductList();
+
+        for (Product product : productList) {
+            System.out.println(product);
+        }
+    }
+
+    @Test
+    void cascadeTest() {
+        Provider provider = saveProvider("새로운 공급업체");
+
+        Product product1 = saveProduct("상품1", 1000, 1000);
+        Product product2 = saveProduct("상품2", 500, 1500);
+        Product product3 = saveProduct("상품3", 750, 500);
+
+        product1.setProvider(provider);
+        product2.setProvider(provider);
+        product3.setProvider(provider);
+
+        provider.getProductList().addAll(Lists.newArrayList(product1, product2, product3));
+
+        providerRepository.save(provider);
+    }
+
+    private Provider saveProvider(String name) {
+        Provider provider = new Provider();
+        provider.setName(name);
+        return providerRepository.save(provider);
+    }
+
+    private Product saveProduct(String name, Integer price, Integer stock) {
+        Product product = new Product();
+        product.setName(name);
+        product.setPrice(price);
+        product.setStock(stock);
+        return productRepository.save(product);
+    }
+
+    @Test
+    @Transactional
+    void orphanRemovalTest() {
+
+        Provider provider = saveProvider("새로운 공급업체");
+
+        Product product1 = saveProduct("상품1", 1000, 1000);
+        Product product2 = saveProduct("상품2", 500, 1500);
+        Product product3 = saveProduct("상품3", 750, 500);
+
+        product1.setProvider(provider);
+        product2.setProvider(provider);
+        product3.setProvider(provider);
+
+        provider.getProductList().addAll(Lists.newArrayList(product1, product2, product3));
+
+        providerRepository.saveAndFlush(provider);
+
+        providerRepository.findAll().forEach(System.out::println);
+        productRepository.findAll().forEach(System.out::println);
+
+        Provider foundProvider = providerRepository.findById(1L).get();
+
+        // 리스트가 비어 있지 않은지 확인
+        if (!foundProvider.getProductList().isEmpty()) {
+            foundProvider.getProductList().remove(0);
+        }
+
+        providerRepository.findAll().forEach(System.out::println);
+        productRepository.findAll().forEach(System.out::println);
+    }
+}
+```
+
+먼저 테스트 데이터를 생성하고
+
+```
+product1.setProvider(provider);
+product2.setProvider(provider);
+product3.setProvider(provider);
+
+provider.getProductList().addAll(Lists.newArrayList(product1, product2, product3));
+```
+
+다음과 같이 연관관계 매핑을 수행합니다.
+연관관계가 매핑된 각 엔티티들을 저장한후 
+
+```
+providerRepository.findAll().forEach(System.out::println);
+productRepository.findAll().forEach(System.out::println);
+```
+
+다음과 같이 각 엔티티를 출력하면 다음과 같이 생성한 공급업체 엔티티 1개, 상품 엔티티 3개가 출력되는 것을 볼 수 있습니다. 
+
+```
+Hibernate: 
+    select
+        p1_0.id,
+        p1_0.created_at,
+        p1_0.name,
+        p1_0.updated_at,
+        pl1_0.provider_id,
+        pl1_0.number,
+        pl1_0.created_at,
+        pl1_0.name,
+        pl1_0.price,
+        pd1_0.id,
+        pd1_0.created_at,
+        pd1_0.description,
+        pd1_0.updated_at,
+        pl1_0.stock,
+        pl1_0.updated_at 
+    from
+        provider p1_0 
+    left join
+        product pl1_0 
+            on p1_0.id=pl1_0.provider_id 
+    left join
+        product_detail pd1_0 
+            on pl1_0.number=pd1_0.product_number 
+    where
+        p1_0.id=?
+Hibernate: 
+    select
+        p1_0.number,
+        p1_0.created_at,
+        p1_0.name,
+        p1_0.price,
+        pd1_0.id,
+        pd1_0.created_at,
+        pd1_0.description,
+        pd1_0.updated_at,
+        p2_0.id,
+        p2_0.created_at,
+        p2_0.name,
+        p2_0.updated_at,
+        p1_0.stock,
+        p1_0.updated_at 
+    from
+        product p1_0 
+    left join
+        product_detail pd1_0 
+            on p1_0.number=pd1_0.product_number 
+    left join
+        provider p2_0 
+            on p2_0.id=p1_0.provider_id 
+    where
+        p1_0.number=?
+Hibernate: 
+    select
+        p1_0.number,
+        p1_0.created_at,
+        p1_0.name,
+        p1_0.price,
+        pd1_0.id,
+        pd1_0.created_at,
+        pd1_0.description,
+        pd1_0.updated_at,
+        p2_0.id,
+        p2_0.created_at,
+        p2_0.name,
+        p2_0.updated_at,
+        p1_0.stock,
+        p1_0.updated_at 
+    from
+        product p1_0 
+    left join
+        product_detail pd1_0 
+            on p1_0.number=pd1_0.product_number 
+    left join
+        provider p2_0 
+            on p2_0.id=p1_0.provider_id 
+    where
+        p1_0.number=?
+Hibernate: 
+    select
+        p1_0.number,
+        p1_0.created_at,
+        p1_0.name,
+        p1_0.price,
+        pd1_0.id,
+        pd1_0.created_at,
+        pd1_0.description,
+        pd1_0.updated_at,
+        p2_0.id,
+        p2_0.created_at,
+        p2_0.name,
+        p2_0.updated_at,
+        p1_0.stock,
+        p1_0.updated_at 
+    from
+        product p1_0 
+    left join
+        product_detail pd1_0 
+            on p1_0.number=pd1_0.product_number 
+    left join
+        provider p2_0 
+            on p2_0.id=p1_0.provider_id 
+    where
+        p1_0.number=?
+Hibernate: 
+    select
+        p1_0.id,
+        p1_0.created_at,
+        p1_0.name,
+        p1_0.updated_at 
+    from
+        provider p1_0
+Hibernate: 
+    select
+        pl1_0.provider_id,
+        pl1_0.number,
+        pl1_0.created_at,
+        pl1_0.name,
+        pl1_0.price,
+        pd1_0.id,
+        pd1_0.created_at,
+        pd1_0.description,
+        pd1_0.updated_at,
+        pl1_0.stock,
+        pl1_0.updated_at 
+    from
+        product pl1_0 
+    left join
+        product_detail pd1_0 
+            on pl1_0.number=pd1_0.product_number 
+    where
+        pl1_0.provider_id=?
+Provider(super=BaseEntity(createdAt=2024-08-02T17:59:41.849487, updatedAt=2024-08-02T17:59:41.849487), id=1, name=새로운 공급업체)
+Hibernate: 
+    select
+        p1_0.number,
+        p1_0.created_at,
+        p1_0.name,
+        p1_0.price,
+        p1_0.provider_id,
+        p1_0.stock,
+        p1_0.updated_at 
+    from
+        product p1_0
+Hibernate: 
+    select
+        pd1_0.id,
+        pd1_0.created_at,
+        pd1_0.description,
+        p1_0.number,
+        p1_0.created_at,
+        p1_0.name,
+        p1_0.price,
+        p2_0.id,
+        p2_0.created_at,
+        p2_0.name,
+        p2_0.updated_at,
+        p1_0.stock,
+        p1_0.updated_at,
+        pd1_0.updated_at 
+    from
+        product_detail pd1_0 
+    left join
+        product p1_0 
+            on p1_0.number=pd1_0.product_number 
+    left join
+        provider p2_0 
+            on p2_0.id=p1_0.provider_id 
+    where
+        pd1_0.product_number=?
+Hibernate: 
+    select
+        pd1_0.id,
+        pd1_0.created_at,
+        pd1_0.description,
+        p1_0.number,
+        p1_0.created_at,
+        p1_0.name,
+        p1_0.price,
+        p2_0.id,
+        p2_0.created_at,
+        p2_0.name,
+        p2_0.updated_at,
+        p1_0.stock,
+        p1_0.updated_at,
+        pd1_0.updated_at 
+    from
+        product_detail pd1_0 
+    left join
+        product p1_0 
+            on p1_0.number=pd1_0.product_number 
+    left join
+        provider p2_0 
+            on p2_0.id=p1_0.provider_id 
+    where
+        pd1_0.product_number=?
+Hibernate: 
+    select
+        pd1_0.id,
+        pd1_0.created_at,
+        pd1_0.description,
+        p1_0.number,
+        p1_0.created_at,
+        p1_0.name,
+        p1_0.price,
+        p2_0.id,
+        p2_0.created_at,
+        p2_0.name,
+        p2_0.updated_at,
+        p1_0.stock,
+        p1_0.updated_at,
+        pd1_0.updated_at 
+    from
+        product_detail pd1_0 
+    left join
+        product p1_0 
+            on p1_0.number=pd1_0.product_number 
+    left join
+        provider p2_0 
+            on p2_0.id=p1_0.provider_id 
+    where
+        pd1_0.product_number=?
+Product(super=BaseEntity(createdAt=2024-08-02T17:59:41.930800, updatedAt=2024-08-02T17:59:41.930800), number=1, name=상품1, price=1000, stock=1000)
+Product(super=BaseEntity(createdAt=2024-08-02T17:59:41.942322, updatedAt=2024-08-02T17:59:41.942322), number=2, name=상품2, price=500, stock=1500)
+Product(super=BaseEntity(createdAt=2024-08-02T17:59:41.945321, updatedAt=2024-08-02T17:59:41.945321), number=3, name=상품3, price=750, stock=500)
+```
+
+그리고 고아 객체를 생성하기 위해 생성한 공급업체 엔티티를 가져온 후 첫 번째로 매핑돼 있는 상품 엔티티의 연관관계를 제거했습니다.
+
+```
+Provider foundProvider = providerRepository.findById(1L).get();
+
+// 리스트가 비어 있지 않은지 확인
+if (!foundProvider.getProductList().isEmpty()) {
+  foundProvider.getProductList().remove(0);
+}
+```
+
+그리고 전체 코드를 수행하면 다음과 같이 연관관계가 끊긴 상품의 엔티티가 제거된 것을 확인할 수 있습니다.
+
+```
+Hibernate: 
+    select
+        p1_0.id,
+        p1_0.created_at,
+        p1_0.name,
+        p1_0.updated_at 
+    from
+        provider p1_0
+Provider(super=BaseEntity(createdAt=2024-08-02T18:06:21.814993, updatedAt=2024-08-02T18:06:21.814993), id=1, name=새로운 공급업체)
+Hibernate: 
+    select
+        p1_0.number,
+        p1_0.created_at,
+        p1_0.name,
+        p1_0.price,
+        p1_0.provider_id,
+        p1_0.stock,
+        p1_0.updated_at 
+    from
+        product p1_0
+Product(super=BaseEntity(createdAt=2024-08-02T18:06:21.932027400, updatedAt=2024-08-02T18:06:21.959213500), number=1, name=상품1, price=1000, stock=1000)
+Product(super=BaseEntity(createdAt=2024-08-02T18:06:21.940686, updatedAt=2024-08-02T18:06:21.963727700), number=2, name=상품2, price=500, stock=1500)
+Product(super=BaseEntity(createdAt=2024-08-02T18:06:21.942692200, updatedAt=2024-08-02T18:06:21.963727700), number=3, name=상품3, price=750, stock=500)
+Hibernate: 
+    select
+        p1_0.id,
+        p1_0.created_at,
+        p1_0.name,
+        p1_0.updated_at 
+    from
+        provider p1_0
+Provider(super=BaseEntity(createdAt=2024-08-02T18:06:21.814993, updatedAt=2024-08-02T18:06:21.814993), id=1, name=새로운 공급업체)
+Hibernate: 
+    delete 
+    from
+        product 
+    where
+        number=?
+Hibernate: 
+    select
+        p1_0.number,
+        p1_0.created_at,
+        p1_0.name,
+        p1_0.price,
+        p1_0.provider_id,
+        p1_0.stock,
+        p1_0.updated_at 
+    from
+        product p1_0
+Product(super=BaseEntity(createdAt=2024-08-02T18:06:21.940686, updatedAt=2024-08-02T18:06:21.963727700), number=2, name=상품2, price=500, stock=1500)
+Product(super=BaseEntity(createdAt=2024-08-02T18:06:21.942692200, updatedAt=2024-08-02T18:06:21.963727700), number=3, name=상품3, price=750, stock=500)
+```
+
+출력 결과에서 실제로 연관관계가 제거되면서 하이버네이트에서는 상태 감지를 통해 삭제하는 쿼리가 수행되는 것을 볼 수 있습니다.
+
+# 정리
+이번 장에서는 연관관계를 설정하는 방법과 영속성 전이라는 개념을 알아봤습니다.
+JPA를 사용할 때 영속이라는 개념은 매우 중요합니다.
+코드를 통해 편리하게 데이터베이스에 접근하기 위해서는 중간에서 엔티티의 상태를 조율하는 영속성 컨텍스트가 어떻게 동작하는지 이해해야 합니다.
+이 과정에서 하이버네이트를 직접 사용하는 것과 Spring Data Jpa를 사용하는 데는 차이가 있습니다.
+따라서 이 책에서는 다루지 않았지만 하이버네이트만 사용하는 JPA도 함께 공부하는 것을 권장합니다.
+JPA 자체를 그대로 다뤄보는 경험을 해보면 DAO와 리포지토리의 차이에 대해서도 더 알 수 있게 되고 스프링 부트 JPA에 대해서도 좀 더 폭넓게 이해할 수 있게 됩니다.
