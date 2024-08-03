@@ -1013,3 +1013,371 @@ ExceptionController에 다음과 같이 메서드를 추가로 생성해 봅시�
 ### 스터디 가이드
 커스텀 예외의 효과에 대해서는 개발자들의 의견이 분분합니다. 우선 커스텀 예외를 만들어 사용해보는 것을 시작으로
 어떤 방식이 효과적인지 직접 고민하고 자신만의 논리를 구축하길 바랍니다.
+
+
+# 커스텀 예외 클래스 생성하기
+이제 커스텀 예외를 생성하고 활용하는 방법을 살펴보겠습니다.
+커스텀 예외는 만드는 목적에 따라 생성하는 방법이 다릅니다.
+이 책에서는 스프링 환경에서 사용할 수 있는 @ControllerAdvice와 @ExceptionHandler의 무분별한 예외처리를 방지하기 위한 커스텀 예외를 생성하는 과정을 실습해 보겠습니다.
+
+커스텀 예외는 예외가 발생하는 상황에 해당하는 상위 예외 클래스를 상속 받습니다.
+그래서 커스텀 예외는 상위 예외 클래스보다 좀 더 구체적인 이름을 사용하기도 합니다.
+그러나 여기서는 커스텀 예외의 네이밍보다는 클래스의 구조적인 설계를 통한 예외 클래스 생성 방법을 알아보겠습니다.
+먼저 Exception 클래스의 커스텀 예외를 만들어보겠습니다.
+예외 클래스의 상속 구조를 보면 Exception 클래스는 Throwable 클래스를 상속받습니다.
+아래 실습에서는 그중 필수적으로 사용되는 message 변수를 이용해 Exception 클래스의 커스텀 예외를 만들겠습니다.
+먼저 Exception 클래스는 다음과 같습니다.
+
+
+```java
+package java.lang;
+
+public class Exception extends Throwable {
+    @java.io.Serial
+    static final long serialVersionUID = -3387516993124229948L;
+
+    public Exception() {
+        super();
+    }
+
+    public Exception(String message) {
+        super(message);
+    }
+
+    public Exception(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public Exception(Throwable cause) {
+        super(cause);
+    }
+
+    protected Exception(String message, Throwable cause,
+                        boolean enableSuppression,
+                        boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
+    }
+}
+```
+
+생성자는 String 타입의 메시지 문자열을 받고 있습니다. 이 생성자는 Throwable 클래스의 생성자를 호출합니다.
+
+Exception 클래스는 부모 클래스인 Throwable 클래스의 생성자를 호출하게 되며, message 변수의 값을 detailMessage 변수로 전달받습니다. 커스텀 예외를 생성하는 경우에도 이 message 변수를 사용하게 됩니다.
+
+그리고 HttpStatus를 커스텀 예외 클래스에 포함시키면 핸들러 안에서 선언해서 사용하는 것이 아닌 예외 클래스만
+전달받으면 그 안에 내용이 포함돼 있는 구조로 설계할 수 있습니다.
+참고로 HttpStatus는 열거형(Enum)입니다. 열거형은 서로 관련 있는 상수를 모은 심볼릭한 명칭의 집합입니다.
+쉽게 생각해서 클래스 타입의 상수로 볼 수 있습니다.
+HttpStatus의 주요 코드 일부를 살펴보겠습니다.
+
+```java
+  @Deprecated
+    USE_PROXY(305, HttpStatus.Series.REDIRECTION, "Use Proxy"),
+    TEMPORARY_REDIRECT(307, HttpStatus.Series.REDIRECTION, "Temporary Redirect"),
+    PERMANENT_REDIRECT(308, HttpStatus.Series.REDIRECTION, "Permanent Redirect"),
+    BAD_REQUEST(400, HttpStatus.Series.CLIENT_ERROR, "Bad Request"),
+    UNAUTHORIZED(401, HttpStatus.Series.CLIENT_ERROR, "Unauthorized"),
+    PAYMENT_REQUIRED(402, HttpStatus.Series.CLIENT_ERROR, "Payment Required"),
+    FORBIDDEN(403, HttpStatus.Series.CLIENT_ERROR, "Forbidden"),
+    NOT_FOUND(404, HttpStatus.Series.CLIENT_ERROR, "Not Found"),
+    METHOD_NOT_ALLOWED(405, HttpStatus.Series.CLIENT_ERROR, "Method Not Allowed"),
+    NOT_ACCEPTABLE(406, HttpStatus.Series.CLIENT_ERROR, "Not Acceptable"),
+    PROXY_AUTHENTICATION_REQUIRED(407, HttpStatus.Series.CLIENT_ERROR, "Proxy Authentication Required"),
+    REQUEST_TIMEOUT(408, HttpStatus.Series.CLIENT_ERROR, "Request Timeout"),
+    CONFLICT(409, HttpStatus.Series.CLIENT_ERROR, "Conflict"),
+    GONE(410, HttpStatus.Series.CLIENT_ERROR, "Gone"),
+    LENGTH_REQUIRED(411, HttpStatus.Series.CLIENT_ERROR, "Length Required"),
+    PRECONDITION_FAILED(412, HttpStatus.Series.CLIENT_ERROR, "Precondition Failed"),
+    PAYLOAD_TOO_LARGE(413, HttpStatus.Series.CLIENT_ERROR, "Payload Too Large"),
+ @Deprecated
+    INSUFFICIENT_SPACE_ON_RESOURCE(419, HttpStatus.Series.CLIENT_ERROR, "Insufficient Space On Resource"),
+    /** @deprecated */
+    @Deprecated
+    METHOD_FAILURE(420, HttpStatus.Series.CLIENT_ERROR, "Method Failure"),
+    /** @deprecated */
+    @Deprecated
+    DESTINATION_LOCKED(421, HttpStatus.Series.CLIENT_ERROR, "Destination Locked"),
+    UNPROCESSABLE_ENTITY(422, HttpStatus.Series.CLIENT_ERROR, "Unprocessable Entity"),
+    LOCKED(423, HttpStatus.Series.CLIENT_ERROR, "Locked"),
+    FAILED_DEPENDENCY(424, HttpStatus.Series.CLIENT_ERROR, "Failed Dependency"),
+    TOO_EARLY(425, HttpStatus.Series.CLIENT_ERROR, "Too Early"),
+    UPGRADE_REQUIRED(426, HttpStatus.Series.CLIENT_ERROR, "Upgrade Required"),
+    PRECONDITION_REQUIRED(428, HttpStatus.Series.CLIENT_ERROR, "Precondition Required"),
+    TOO_MANY_REQUESTS(429, HttpStatus.Series.CLIENT_ERROR, "Too Many Requests"),
+    REQUEST_HEADER_FIELDS_TOO_LARGE(431, HttpStatus.Series.CLIENT_ERROR, "Request Header Fields Too Large"),
+    UNAVAILABLE_FOR_LEGAL_REASONS(451, HttpStatus.Series.CLIENT_ERROR, "Unavailable For Legal Reasons"),
+    INTERNAL_SERVER_ERROR(500, HttpStatus.Series.SERVER_ERROR, "Internal Server Error"),
+    NOT_IMPLEMENTED(501, HttpStatus.Series.SERVER_ERROR, "Not Implemented"),
+    BAD_GATEWAY(502, HttpStatus.Series.SERVER_ERROR, "Bad Gateway"),
+    SERVICE_UNAVAILABLE(503, HttpStatus.Series.SERVER_ERROR, "Service Unavailable"),
+    GATEWAY_TIMEOUT(504, HttpStatus.Series.SERVER_ERROR, "Gateway Timeout"),
+    HTTP_VERSION_NOT_SUPPORTED(505, HttpStatus.Series.SERVER_ERROR, "HTTP Version not supported"),
+    VARIANT_ALSO_NEGOTIATES(506, HttpStatus.Series.SERVER_ERROR, "Variant Also Negotiates"),
+    INSUFFICIENT_STORAGE(507, HttpStatus.Series.SERVER_ERROR, "Insufficient Storage"),
+    LOOP_DETECTED(508, HttpStatus.Series.SERVER_ERROR, "Loop Detected"),
+    BANDWIDTH_LIMIT_EXCEEDED(509, HttpStatus.Series.SERVER_ERROR, "Bandwidth Limit Exceeded"),
+    NOT_EXTENDED(510, HttpStatus.Series.SERVER_ERROR, "Not Extended"),
+    NETWORK_AUTHENTICATION_REQUIRED(511, HttpStatus.Series.SERVER_ERROR, "Network Authentication Required");
+
+    private static final HttpStatus[] VALUES = values();
+    private final int value;
+    private final Series series;
+    private final String reasonPhrase;
+
+
+private HttpStatus(int value, Series series, String reasonPhrase) {
+        this.value = value;
+        this.series = series;
+        this.reasonPhrase = reasonPhrase;
+    }
+
+ public int value() {
+        return this.value;
+    }
+
+    public Series series() {
+        return this.series;
+    }
+
+    public String getReasonPhrase() {
+        return this.reasonPhrase;
+    }
+```
+
+HttpStatus는 value, series, reasonPhrase 변수로 구성된 객체를 제공합니다.
+흔히 볼 수 있는 Http 응답 코드와 메시지입니다.
+위 예제에서는 4xx 코드만 나와있지만 1xx, 2xx, 3xx, 4xx, 5xx에 대해서도 코드 모음이 구성돼 있습니다.
+각 값들은 작성돼 있는 메서드를 통해 값들을 가져와 사용합니다.
+
+최종적으로 이번에 만들어볼 커스텀 예외 클래스를 생성하는데 필요한 내용은 다음과 같이 정리할 수 있습니다.
+
+- 에러 타입(error type) : HttpStatus의 reasonPhrase
+- 에러 코드(error code) : HttpStatus의 value
+- 메시지(message) : 상황별 상세 메시지
+
+위와 같은 구서으로 커스텀 예외 클래스를 생성하겠습니다.
+추가로 애플리케이션에서 가지고 있는 도메인 레벨을 메시지에 표현하기 위해 ExceptionClass 열거형 타입을 생성하겠습니다.
+이를 도식화하면 다음과 같은 예외 클래스 구조가 됩니다.
+
+Throwalble
+ -Exception
+  -CustomException
+    -HttpStatus
+    - ExceptionClass
+
+```java
+package com.springboot.valid_exception.common;
+
+public class Constants {
+
+    public enum ExceptionClass {
+
+        PRODUCT("Product");
+
+        private String exceptionClass;
+
+        ExceptionClass(String exceptionClass) {
+            this.exceptionClass = exceptionClass;
+        }
+
+        String getExceptionClass(){
+            return exceptionClass;
+        }
+
+        @Override
+        public String toString(){
+            return getExceptionClass() + " Exception";
+        }
+    }
+}
+```
+
+Constants라는 클래스를 생성한 후 ExceptionClass 내부에 생성했습니다.
+열거형을 별도로 생성해도 무관하지만 상수 개념으로 사용하기 때문에 앞으로의 확장성을 위해
+Constants라는 상수들을 통합 관리하는 클래스를 생성하고 내부에 ExceptionClass를 선언했습니다.
+
+ExceptionClass라는 열거형은 커스텀 예외 클래스에서 메시지 내부에 어떤 도메인에서 문제가 발생했는지 보여주는데 사용됩니다.
+지금까지 만든 애플리케이션은 상품이라는 도메인에 대해서만 실습 코드를 작성해왔기 때문에 다음과 같이 커스텀 예외 클래스를 생성합니다.
+
+```java
+package com.springboot.valid_exception.common.exception;
+
+import com.springboot.valid_exception.common.Constants;
+import org.springframework.http.HttpStatus;
+
+public class CustomException extends Exception {
+
+    private Constants.ExceptionClass exceptionClass;
+    private HttpStatus httpStatus;
+
+    public CustomException(Constants.ExceptionClass exceptionClass, HttpStatus httpStatus, String message) {
+        super(exceptionClass.toString() + message);
+        this.exceptionClass = exceptionClass;
+        this.httpStatus = httpStatus;
+    }
+
+    public Constants.ExceptionClass getExceptionClass() {
+        return exceptionClass;
+    }
+
+    public int getHttpCode() {
+        return httpStatus.value();
+    }
+
+    public String getHttpStatusType() {
+        return httpStatus.getReasonPhrase();
+    }
+
+    public HttpStatus getHttpStatus() {
+        return httpStatus;
+    }
+}
+```
+
+커스텀 예외 클래스는 앞에서 만든 ExceptionClass와 HttpStatus를 필드로 가집니다.
+두 객체를 기반으로 예외 내용을 정의하며, 클래스를 초기화합니다.
+그럼 커스텀 예외를 활용해 보겠습니다. 먼저 ExceptionHanldler 클래스에 CustomException에 대한 예외처리 코드를 다음과 같이 추가합니다.
+
+
+```java
+package com.springboot.valid_exception.common.exception;
+
+import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@RestControllerAdvice
+public class CustomExceptionHandler {
+
+    private final Logger LOGGER = LoggerFactory.getLogger(CustomExceptionHandler.class);
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<Map<String, String>> handleException(RuntimeException e, HttpServletRequest request) {
+        HttpHeaders responseHeaders = new HttpHeaders();
+        HttpStatus httpStatus = HttpStatus.BAD_REQUEST;
+
+        LOGGER.error("Advice 내 handlerException 호출, {},{}", request.getRequestURI(), e.getMessage());
+
+        Map<String, String> map = new HashMap<>();
+        map.put("error type", httpStatus.getReasonPhrase());
+        map.put("code", "400");
+        map.put("message", e.getMessage());
+
+        return new ResponseEntity<>(map, responseHeaders, httpStatus);
+    }
+
+    @ExceptionHandler(CustomException.class)
+    public ResponseEntity<Map<String, String>>handleException(CustomException e, HttpServletRequest request) {
+        HttpHeaders responseHeaders = new HttpHeaders();
+
+        LOGGER.error("Advice 내 handleException 호출, {},{}", request.getRequestURI(), e.getMessage());
+
+         Map<String, String> map = new HashMap<>();
+         map.put("error type", e.getHttpStatusType());
+         map.put("code", Integer.toString(e.getHttpCode()));
+         map.put("message", e.getMessage());
+
+         return new ResponseEntity<>(map, responseHeaders, e.getHttpStatus());
+    }
+}
+```
+
+위와 같이 처리하면 기존에 작성했던 핸들러 메서드와 달리 예외 발생 시점에 HttpStatus를 정의해서 전달하기 때문에
+클라이언트 요청에 따라 유동적인 응답 코드를 설정할 수 있다는 장점이 있습니다.
+지금까지 커스텀 예외 클래스를 생성하고 예외 처리를 수행하는 방법을 살펴봤습니다.
+앞에서 만든 커스텀 예외에 대해 Swagger로 테스트하기 위해 다음과 같이 컨틀롤러 메서드를 생성합니다.
+
+
+```java
+package com.springboot.valid_exception.data.controller;
+
+import com.springboot.valid_exception.common.Constants;
+import com.springboot.valid_exception.common.exception.CustomException;
+import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/exception")
+public class ExceptionController {
+
+    private final Logger LOGGER = LoggerFactory.getLogger(ExceptionController.class);
+
+    @GetMapping
+    public void getRuntimeException() {
+        throw new RuntimeException("getRuntimeException 메서드 호출");
+    }
+
+    @ExceptionHandler(value = RuntimeException.class)
+    public ResponseEntity<Map<String, String>> handleException(RuntimeException e, HttpServletRequest request) {
+        HttpHeaders responseHeader = new HttpHeaders();
+        responseHeader.setContentType(MediaType.APPLICATION_JSON);
+        HttpStatus httpStatus = HttpStatus.BAD_REQUEST;
+
+        LOGGER.error("클래스 내 handleException 호출, {}, {}", request.getRequestURI(), e.getMessage());
+
+        Map<String, String> map = new HashMap<>();
+        map.put("error type", httpStatus.getReasonPhrase());
+        map.put("code", "400");
+        map.put("message", e.getMessage());
+
+        return new ResponseEntity<>(map, responseHeader, httpStatus);
+    }
+
+    @GetMapping("/custom")
+    public void getCustomException() throws CustomException {
+        throw new CustomException(Constants.ExceptionClass.PRODUCT, HttpStatus.BAD_REQUEST, "getCustomException 메서드 호출");
+    }
+}
+```
+
+이처럼 CustomException을 throw 키워드로 던지면 커스텀 예외가 발생합니다.
+괄호 내에 생성자를 정의한 것처럼 ExceptionClass에서 도메인을 비롯해 HttpStatus를 통해 
+어떤 응답 코드를 사용할지와 세부 메시지를 전달합니다.
+예제에서는 세부 메시지를 간단한 문자열로 표현했지만 예외가 발생하는 상황에서 특정 값을 전달하는 구성이라면
+상세한 메시지를 작성해서 전달하거나 커스텀 예외 클래스를 적절한 타입으로 변경하는 것도 좋습니다.
+
+이제 애플리케이션을 재실행하고 Swagger를 통해 메서드들 호출하겠습니다.
+Swagger를 통해 해당 메서드를 호출하면 다음과 같이 응답 내용이 출력되는 것을 볼수 있습니다.
+
+```
+Code	Details
+400
+Undocumented
+Error: response status is 400
+
+Response body
+Download
+{
+  "code": "400",
+  "error type": "Bad Request",
+  "message": "Product ExceptiongetCustomException 메서드 호출"
+}
+Response headers
+ connection: close 
+ content-type: application/json 
+ date: Sat,03 Aug 2024 07:52:49 GMT 
+ transfer-encoding: chunked
+```
+
+Response Body를 통해 예외 발생 지점에서 설정한 값이 정상적으로 담겨 클라이언트로 응답한 것을 볼 수 있습니다.
+
