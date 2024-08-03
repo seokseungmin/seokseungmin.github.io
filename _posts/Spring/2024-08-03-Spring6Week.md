@@ -670,3 +670,346 @@ public class ValidatedRequestDto {
 ```
 
 # 예외 처리
+애플리케이션을 개발할 때는 불가피하게 많은 오류가 발생하게 됩니다.
+자바에서는 이러한 오류를 try/catch, throw 구문을 활용해 처리합니다.
+스플링부트에서는 더욱 편리하게 예외처리를 할 수 있는
+기능을 제공합니다. 이번 절에서는 예외 처리의 기초를 소개하고 스프링 부트에서 적용할 수 있는 예외 처리 방식을 알아보겠습니다.
+
+### 예외와 에러
+프로그래밍에서 예외(exception)란 입력 값의 처리가 불가능하거나 참조된 값이 잘못된 경우 등 애플리케이션이 정상적으로 동작하지 못하는 상황을 의미합니다.
+예외는 개발자가 직접 처리할 수 있는 것이므로 미리 코드 설계를 통해 처리할 수 있습니다.
+다음으로 에러(error)가 있습니다.
+많은 사람들이 예외와 비슷한 의미로 사용하고 있지만 소프트웨어 공학에서는 엄연히 다르게 사용되는 용어입니다.
+에러는 주로 자바의 가상머신에서 발생시키는 것으로서 예외와 달리 애플리케이션 코드에서 처리할 수 있는 것이
+거의 없습니다.
+대표적인 예로 메모리 부족(OutOfMemory), 스택 오버플로(StackOverFlow) 등이 있습니다.
+이러한 에러는 발생 시점에 처리하는 것이 아니라 미리 애플리케이션의 코드를 살펴보면서 문제가 발생하지 않도록 예방해서 원천적으로 차단해야 합니다.
+
+# 예외 클래스
+자바의 예외 클래스는 다음과 같은 상속 구조를 갖추고 있습니다.
+
+- java.lang.Object
+  - Throwable
+    - Exception (Checked Exception)
+      - IOException
+      - SQLException
+      - CustomException
+      - ... (기타 Checked Exception들)
+    - RuntimeException (Unchecked Exception)
+      - NullPointerException
+      - IllegalArgumentException
+      - IndexOutOfBoundException
+      - ... (기타 Unchecked Exception들)
+    - Error (Unchecked Exception)
+      - IOError 
+      - OutOfMemoryError
+      - StackOverflowError
+      - ... (기타 Error들)
+
+
+모든 예외 클래스는 Throwable 클래스를 상속받습니다.
+그리고 가장 익숙하게 볼 수 있는 Exception 클래스는 다양한 자식 클래스를 가지고 있습니다.
+이 클래스는 크게 Checked Exception과 Unchecked Exception으로 구분할 수 있습니다.
+
+| 구분               | Checked Exception       | Unchecked Exception                                     |
+|------------------|------------------------|---------------------------------------------------------|
+| 처리여부          | 반드시 예외 처리 필요      | 명시적 처리를 강제하지 않음                               |
+| 확인시점          | 컴파일 단계              | 실행 중 단계                                           |
+| 대표적인 예외클래스 | IOException, SQLException | RuntimeException, NullPointerException, IllegalArgumentException, IndexOutOfBoundException, SystemException |
+
+Checked Exception은 컴파일 단계에서 확인 가능한 예외 상황입니다.
+이러한 예외는 IDE에서 캐치해서 반드시 예외 처리를 할 수 있게 표시해줍니다.
+반면 Unchecked Exception은 런타임 단계에서 확인되는 예외 상황을 나타냅니다.
+즉, 문법상 문제는 없지만 프로그램이 동작하는 도중 예기치 않은 상황이 생겨 발생하는 예외를 의미합니다.
+
+간단히 분류하자면 RuntimeException을 상속받는 Exception 클래스는 Unchecked Exception이고그렇지 않은 Exception 클래스는 Checked Exception입니다.
+
+# 예외 처리 방법
+예외가 발생했을 때 이를 처리하는 방법은 크게 세 가지가 있습니다.
+- 예외 복구
+- 예외 처리 회피
+- 예외 전환
+
+먼저 예외 복구 방법은 에외 상황을 파악해서 문제를 해결하는 방식입니다.
+대표적인 방법이 try/catch구문입니다. try블록에는 예외가 발생할 수 있는 코드를 작성합니다.
+대체로 외부 라이브러리를 사용하는 경우에는 try 블록을 사용하라는 IDE의 알림이 발생하지만 개발자가 직접
+작성한 로직은 예외 상황을 예측해서 try 블록에 포함시켜야 합니다.
+그리고 catch 블록을 통해 try 블록에서 발생하는 예외 상황을 처리하는 내용을 작성합니다.
+이때 catch 블록은 여러 개를 작성할수 있습니다.
+이 경우 예외상황이 발생하면 애플리케이션에서는 여러 개의 catch 블록을 순차적으로 거치면서 예외 유형과 매칭되는
+블록을 찾아 예외 처리 동작을 수행합니다.
+
+```java
+int a = 1;
+String b = "a";
+
+try{
+  System.out.println(a + Integer.parseInt(b));
+} catch (NumberFormatException e){
+  b = "2";
+  System.out.println(a + Integer.parseInt(b));
+}
+```
+
+또 다른 예외 처리 방법 중 하나는 예외처리를 회피하는 방법입니다.
+이 방법은 예외가 발생한 시점에서 바로 처리하는 것이 아니라 에외가 발생한 메서드를 호출한 곳에서 처리 할 수 있게
+전가하는 방식입니다.
+이때 throw 키워드를 사용헤 어떤 예외가 발생했는지 호출부에 내용을 전달할 수 있습니다.
+
+
+```java
+int a = 1;
+String b = "a";
+
+try{
+  System.out.println(a + Integer.parseInt(b));
+} catch (NumberFormatException e){
+  throw new NumberFormatException("숫자가 아닙니다.");
+}
+```
+
+마지막으로 예외 전환 방법이 있습니다. 이 방법은 앞의 두 방식을 적절하게 섞은 방식입니다.
+예외가 발생헀을 때 어떤 예외가 발생했느냐에 따라 호출부로 예외 내용을 전달하면서 좀 더 적합한
+예외 타입으로 전달할 필요가 있습니다.
+또는 애플리케이션에서 예외 처리를 좀 더 단순하게 하기 위해 래핑(Wrapping)해야 하는 경우도 있습니다.
+이런 경우에는 try/catch 방식을 사용하면서 catch블록에서 throw 키워드를 사용해 다른 예외 타입으로 전달하면 됩니다.
+이 방식은 앞으로 나올 커스텀 예외를 만드는 과정에서 사용되는 방법이므로 별도로 예제를 보여드리지 않겠습니다.
+
+# 스프링 부트의 예외 처리 방식
+웹 서비스 애플리케이션에서는 외부에서 들어오는 요청에 담긴 데이터 처리하는 경우가 많습니다.
+그 과정에서 예외가 발생하면 예외를 복구해서 정상으로 처리하기보다는 요청을 보낸 클라이언트에 어떤 문제가 발생했는지 상황을 전달하는 경우가 많습니다.
+이번 절에서는 이를 반영해서 에외 상황을 복구하는 방법보다는 스프링 부트에서 사용하는 예외 처리 방법을 중심으로
+설명하고 실습하겠습니다.
+
+예외가 발생했을 때 클라이언트 오류 메시지를 전달하려면 각 레이어에서 발생한 예외를 엔드포인트 레벨인
+컨트롤러로 전달해야 합니다. 이렇게 전달받은 예외를 스프링 부트에서 처리하는 방식으로 크게 두가지가 있습니다.
+
+- @(Rest)ControllerAdvice와 @ExceptionHandler를 통해 모든 컨트롤러의 예외를 처리
+- @ExceptionHandler를 통해 특정 컨트롤러의 예외를 처리
+
+# Tip
+@ControllerAdvice 대신 @RestControllerAdvice를 사용하면 결괏값을 JSON 형태로 반환할 수 있습니다.
+먼저 @RestControllerAdvice를 활용한 핸들러 클래스를 생성하겠습니다.
+다음과 같이 CustomExceptionHandler 클래스를 생성합니다.
+
+```
+package com.springboot.valid_exception.common.exception;
+
+import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@RestControllerAdvice
+public class CustomExceptionHandler {
+
+    private final Logger LOGGER = LoggerFactory.getLogger(CustomExceptionHandler.class);
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<Map<String, String>> handleException(RuntimeException e, HttpServletRequest request) {
+        HttpHeaders responseHeaders = new HttpHeaders();
+        HttpStatus httpStatus = HttpStatus.BAD_REQUEST;
+
+        LOGGER.error("Advice 내 handlerException 호출, {},{}", request.getRequestURI(), e.getMessage());
+
+        Map<String, String> map = new HashMap<>();
+        map.put("error type", httpStatus.getReasonPhrase());
+        map.put("code", "400");
+        map.put("message", e.getMessage());
+
+        return new ResponseEntity<>(map, responseHeaders, httpStatus);
+    }
+
+    @ExceptionHandler(CustomException.class)
+    public ResponseEntity<Map<String, String>>handleException(CustomException e, HttpServletRequest request) {
+        HttpHeaders responseHeaders = new HttpHeaders();
+
+        LOGGER.error("Advice 내 handleException 호출, {},{}", request.getRequestURI(), e.getMessage());
+
+         Map<String, String> map = new HashMap<>();
+         map.put("error type", e.getHttpStatusType());
+         map.put("code", Integer.toString(e.getHttpCode()));
+         map.put("message", e.getMessage());
+
+         return new ResponseEntity<>(map, responseHeaders, e.getHttpStatus());
+    }
+}
+```
+
+에제에서 사용한 @RestControllerAdvice와 이 예제에서는 사용하지 않은 @ControllerAdvice는 스프링에서 제공하는
+어노테이션입니다. 이 어노테이션은 @Controller나 @RestController에서 발생하는 예외를 한 곳에서 관리하고
+처리할 수 있게 하는 기능을 수행합니다.
+즉, 다음과 같이 별도 설정을 통해 예외를 관제하는 범위를 지정할 수 있습니다.
+@RestControllerAdvice(basePackages = "com.springboot.valid_exception")
+
+지정된 @ExceptionHandler는 @Controller나 @RestController가 적용된 빈에서 발생하는 예외를 잡아 처리하는 메서드를 정의할 때 사용합니다. 어떤 예외 클래스를 처리할지는 value 속성으로 등록합니다.
+value 속성은 배열의 형식으로도 전달받을 수 있어 여러 예외 클래스를 등록할 수도 있습니다.
+위 예제에서는 RuntimeException이 발생하면 처리하도록 코드를 작성했으므로 RuntimeException에 포함되는
+각종 예외가 발생할 경우를 포착해서 처리하게 됩니다.
+
+클라이언트에게 오류가 발생했다는 것을 알리는 응답 메시지를 구성해서 리턴합니다.
+컨트롤러의 메서드에 다른 타입의 리턴이 설정돼 있어도 핸들러 메서드에서 별도의 리턴 타입을 지정할 수 있습니다.
+
+이 예제를 테스틀하기 위해 예외를 발생시킬 수 있는 컨트롤러를 생성하겠습니다.
+다음과 같이 ExceptionController를 생성합니다.
+
+```java
+package com.springboot.valid_exception.data.controller;
+
+import com.springboot.valid_exception.common.Constants;
+import com.springboot.valid_exception.common.exception.CustomException;
+import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/exception")
+public class ExceptionController {
+
+    private final Logger LOGGER = LoggerFactory.getLogger(ExceptionController.class);
+
+    @GetMapping
+    public void getRuntimeException() {
+        throw new RuntimeException("getRuntimeException 메서드 호출");
+    }
+
+    @ExceptionHandler(value = RuntimeException.class)
+    public ResponseEntity<Map<String, String>> handleException(RuntimeException e, HttpServletRequest request) {
+        HttpHeaders responseHeader = new HttpHeaders();
+        responseHeader.setContentType(MediaType.APPLICATION_JSON);
+        HttpStatus httpStatus = HttpStatus.BAD_REQUEST;
+
+        LOGGER.error("클래스 내 handleException 호출, {}, {}", request.getRequestURI(), e.getMessage());
+
+        Map<String, String> map = new HashMap<>();
+        map.put("error type", httpStatus.getReasonPhrase());
+        map.put("code", "400");
+        map.put("message", e.getMessage());
+
+        return new ResponseEntity<>(map, responseHeader, httpStatus);
+    }
+
+    @GetMapping("/custom")
+    public void getCustomException() throws CustomException {
+        throw new CustomException(Constants.ExceptionClass.PRODUCT, HttpStatus.BAD_REQUEST, "getCustomException 메서드 호출");
+    }
+}
+```
+
+위 예제의 getRuntimeException() 메서드는 컨트롤러로 요청이 들어오면 RuntimeException을 발생시킵니다.
+다음과 같이 Swagger 페이지에서 이 메서드를 호출해 봅시다.
+
+호출하면 400 에러와 함께 다음과 같이 에러 메시지가 Body 값에 담겨 응답이 돌아옵니다.
+
+```
+Code	Details
+400
+Undocumented
+Error: response status is 400
+
+Response body
+Download
+{
+  "code": "400",
+  "error type": "Bad Request",
+  "message": "getRuntimeException 메서드 호출"
+}
+Response headers
+ connection: close 
+ content-type: application/json 
+ date: Sat,03 Aug 2024 06:57:01 GMT 
+ transfer-encoding: chunked
+```
+
+핸들러 메서드는 Map 객체에 응답할 메시지를 구성하고 ResponseEntity에 HttpHeader, HttpStatus, Body값을 담아
+전달합니다.
+이 처럼 컨트롤러에서 던진 예외는 @ControllerAdvice 또는 @RestControllerAdvice가 선언돼 있는 핸들러 클래스에서
+매핑된 예외 타입을 찾아 처리하게 됩니다.
+두 어노테이션은 별도 범위 설정이 없으면 전역 범위에서 예외를 처리하기 때문에 특정 컨트롤러에서만 동작하는
+@ExceptionHandler 메서드를 생성해서 처리할 수도 있습니다.
+ExceptionController에 다음과 같이 메서드를 추가로 생성해 봅시다.
+위 코드는 이미 추가된 상태입니다. 그래서 생략하겠습니다.
+
+컨트롤러 클래스 내에 @ExceptionHandler 어노테이션을 사용한 메서드를 선언하면 해당 클래스에 국한해서 예외 처리를 할 수 있습니다. 핸들러 메서드에서 각 로그 메시지에 다음과 같은 내용이 콘솔에 출력되는 것을 볼 수 있습니다.
+
+```
+2024-08-03 16:03:43.796 [http-nio-8080-exec-6] ERROR c.s.v.d.c.ExceptionController - 클래스 내 handleException 호출, /exception, getRuntimeException 메서드 호출
+```
+
+출력 결과에서 '클래스 내 handleException 호출'이라는 메시지를 볼 수 있습니다. 만약 `@ControllerAdvice`와 컨트롤러 내에 동일한 예외 타입을 처리한다면 좀 더 우선순위가 높은 클래스 내의 핸들러 메서드가 사용되는 것을 볼 수 있습니다. 우선순위를 비교하는 방법은 총 두 가지가 있습니다.
+
+### @ControllerAdvice vs @RestControllerAdvice
+
+```plaintext
+@ControllerAdvice                                      @RestControllerAdvice
+---------------------------------------------------    ---------------------------------------------------
+|                                                   |    |                                               |
+| - @ExceptionHandler(Exception.class) < (우선순위 높음) |    | - @ExceptionHandler(NullPointerException.class) |
+|                                                   |    |                                               |
+---------------------------------------------------    ---------------------------------------------------
+```
+
+### 구체적인 예외 클래스 우선순위
+만약 컨트롤러 또는 `@ControllerAdvice` 클래스 내에 동일하게 핸들러 메서드가 선언된 상태에서 다음과 같이 `Exception` 클래스와 그보다 좀 더 구체적인 `NullPointerException` 클래스가 각각 선언된 경우에는 구체적인 클래스가 지정된 쪽이 우선순위를 갖게 됩니다.
+
+### 글로벌 예외 처리 vs 컨트롤러 예외 처리
+`@ControllerAdvice`의 글로벌 예외 처리와 컨트롤러 내의 예외 처리에 동일한 타입의 예외를 처리하게 되면 범위가 좁은 컨트롤러의 핸들러 메서드가 우선순위를 갖게 됩니다.
+
+```plaintext
+@ControllerAdvice                                      @Controller
+---------------------------------------------------    ---------------------------------------------------
+|                                                   |    |                                               |
+| - @ExceptionHandler(Exception.class) < (우선순위 높음) |    | - @ExceptionHandler(Exception.class)           |
+|                                                   |    |                                               |
+---------------------------------------------------    ---------------------------------------------------
+ 글로벌 예외처리                                       컨트롤러 예외 처리
+```
+
+따라서, 예외 처리 우선순위를 결정할 때는 예외 클래스의 구체성과 핸들러 메서드의 위치를 고려해야 합니다.
+
+# 커스텀 예외
+애플리케이션을 개발하다 보면 점점 예외로 처리할 영역이 늘어나고, 예외 상황이 다양해지면서 사용하는
+예외 타입도 많아집니다.
+대부분의 상황에서는 자바에서 이미 적절한 상황에 사용할 수 있도록 제공하는 표준 예외(Standard Exception)를 사용하면 해결됩니다.
+사실 애플리케이션의 예외 처리에는 표준 예외만 사용해도 모든 상활들을 처리할 수 있습니다.
+그런데 왜 커스텀 예외(Custom Exception)를 만들어 사용할까요?
+
+커스텀 예외를 만들어서 사용하면 네이밍에 개발자의 의도를 담을 수 있기 때문에 이름만으로도 어느 정도 예외 상황을 짐작할 수 있습니다.
+앞에서 언급했듯이 표준 예외에서도 다양한 예외 상황을 처리할 수 있는 클래스를 제공하고 있지만
+표준 예외에서 제공하는 클래스는 해당 예외 타입의 이름만으로 이해하기 어려운 경우가 있습니다.
+그래서 표준 예외를 사용할 때는 예외 메시지를 상세히 작성해야 하는 번거로움이 있습니다.
+
+또한 커스텀 예외를 사용하면 애플리케이션에서 발생하는 예외를 개발자가 직접 관리하기가 수월해집니다.
+표준 에외를 상속받은 커스텀 예외들을 개발자가 직접 코드로 관리하기 때문에 책임 소재를 애플리케이션
+내부로 가져올 수 있게 됩니다.
+마지막으로 커스텀 예외를 사용하면 예외 상황에 대한 처리도 용이합니다.
+앞에서 @ControllerAdvice와 @ExceptionHandler에 대해 알아봤는데, 이러한 어노테이션을 사용해
+애플리케이션에서 발생하는 예외 상황들을 한 곳에서 처리할 수 있었습니다.
+예를 들어, RuntimeException에 대해 @ControllerAdvice의 내부에서 표준 예외 처리를 하는 로직을 
+작성한 경우 개발자가 의도한 RuntimeException 부분이 아닌 의도하지 않은 부분에서
+발생하는 에러들이 존재할 수 있습니다.
+표준 예외를 사용하면 이처럼 의도하지 않은 예외 상황도 정해진 예외 처리 코드에서 처리하기 때문에
+어디에서 문제가 발생했는지 확인하기가 어렵습니다.
+그러나 커스텀 예외로 관리하면 의도하지 않았던 부분에서 발생한 예외는 개발자가 관리하는 예외 처리 코드가 처리하지 않으므로 개발 과정에서 혼동할 여지가 줄어듭니다.
+
+### 스터디 가이드
+커스텀 예외의 효과에 대해서는 개발자들의 의견이 분분합니다. 우선 커스텀 예외를 만들어 사용해보는 것을 시작으로
+어떤 방식이 효과적인지 직접 고민하고 자신만의 논리를 구축하길 바랍니다.
