@@ -9583,3 +9583,242 @@ key가 삭제되어 빈 객체만 보여진다.
 ```json
 {}
 ```
+
+# 12장 서버 간 통신
+
+# RestTemplate
+
+RestTemplate는 다음과 같은 특징을 가진다:
+
+- **Http 프로토콜의 메서드에 맞는 여러 메서드를 제공한다**:
+  GET, POST, PUT, DELETE 등 HTTP 메서드에 대응하는 다양한 메서드를 제공하여 HTTP 요청을 손쉽게 보낼 수 있다.
+
+- **RESTful 형식을 갖춘 템플릿이다**:
+  RESTful 웹 서비스와 상호작용하기 위한 템플릿으로, RESTful 원칙을 따르는 HTTP 요청을 간편하게 작성할 수 있다.
+
+- **HTTP 요청 후 JSON, XML, 문자열 등의 다양한 형식으로 응답받을 수 있다**:
+  서버로부터의 응답을 JSON, XML, 문자열 등 다양한 형식으로 변환하여 처리할 수 있다.
+
+- **블로킹(blocking) I/O 기반의 동기 방식 사용**:
+  요청을 보내고 응답을 받을 때까지 대기하는 동기식 방식으로 작동하며, 이로 인해 요청이 완료될 때까지 현재 스레드가 블로킹된다.
+
+- **다른 API를 호출할 때 HTTP 헤더에 다양한 값을 설정할 수 있다**:
+  HTTP 요청을 보낼 때, 다양한 HTTP 헤더를 설정하여 필요한 정보를 추가할 수 있다.
+
+  ![new repo](/assets/images/posts_img/Spring/RestTemplate.png)
+
+  여기서 애플리케이션은 우리가 직접 작성하는 애플리케이션 코드 구현부를 의미합니다.
+  애플리케이션에서는 RestTemplate을 선언하고 URI와 HTTP메서드, Body등을 설정합니다.
+  그리고 외부 API로 요청을 보내게 되면 RestTemplate애서 HttpMessageConverter를 통해 RequestEntity를 요청 메시지로 변환합니다.
+  RestTemplate에서는 변환된 요청 메시지를 ClientRequestFactory를 통해 ClientRequest로 가져온 후 외부 API로 요청을 보냅니다.
+  외부에서 요청에 대한 응답을 받으면 RestTemplate은 ResponseErrorHandler로 오류를 확인하고, 오류가 있다면 ClientHttpResponse에서 응답 데이터를 처리합니다.
+  받은 응답 데이터가 정상적이라면 다시한번 HttpMessageConverter를 거쳐 자바 객체로 변환해서 애플리케이션으로 반환합니다.
+
+### RestTemplate.class
+
+```java
+RestTemplate.class
+package org.springframework.web.client;
+
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.RequestEntity;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.ClientHttpRequest;
+import org.springframework.http.client.ClientHttpResponse;
+```
+
+## 0. 애플리케이션에서 RestTemplate 작성
+RestTemplate을 선언하고, URI와 HTTP 메서드, Body 등을 설정 후 RequestEntity와 같은 Request 메서드를 통해 요청 로직을 작성한다.
+
+## 1~3. 애플리케이션 ---요청---> REST API
+RestTemplate에서 HttpMessageConverter를 통해 RequestEntity를 요청 메시지로 변환한다.
+
+## 4~5. RestTemplate ---요청메세지--> ClientHttpRequest
+RestTemplate에서는 변환된 요청 메시지를 ClientHttpRequestFactory를 통해 ClientHttpRequest로 가져온 후 외부 API로 요청을 보낸다.
+
+## 6~8. 외부 API로부터 받은 응답 --RestTemplate--> ResponseErrorHandler
+외부에서 요청에 대한 응답을 받으면 RestTemplate은 ResponseErrorHandler로 오류를 확인하고, 오류가 있다면 ClientHttpResponse에서 응답 데이터를 처리한다.
+
+## 8~11. 응답이 정상 --HttpMessageConverter--> 애플리케이션
+받은 응답 데이터가 정상적이라면 다시 한번 HttpMessageConverter를 거쳐 자바 객체로 변환해서 애플리케이션으로 반환한다.
+
+## 대표적인 메서드
+RestTemplate에서는 더욱 편리하게 외부 API로 요청을 보낼 수 있도록 다음과 같은 다양한 메서드를 제공한다.
+
+| 메서드           | HTTP 형태 | 설명                                    |
+|------------------|-----------|-----------------------------------------|
+| getForObject     | GET       | 응답값을 객체로 반환                    |
+| getForEntity     | GET       | 응답값을 ResponseEntity 형식으로 반환   |
+| postForLocation  | POST      | 응답값을 헤더에 저장된 URI로 반환       |
+| postForObject    | POST      | 응답값을 객체로 반환                    |
+| postForEntity    | POST      | 응답값을 ResponseEntity 형식으로 반환   |
+| delete           | DELETE    | DELETE 형식으로 요청                    |
+| put              | PUT       | PUT 형식으로 요청                       |
+| patchForObject   | PATCH     | PATCH 형식으로 요청한 결과를 객체로 반환|
+| optionsForAllow  | OPTIONS   | 해당 URI에서 지원하는 HTTP 메서드를 조회|
+| exchange         | any       | HTTP 헤더를 임의로 추가할 수 있고, 어떤 메서드 형식에서도 사용할 수 있음|
+| execute          | any       | 요청과 응답에 대한 콜백을 수정          |
+
+---
+
+## RestTemplate 사용하기
+응답을 보낼 서버 용도로 별도의 프로젝트를 하나 생성하고, 다른 프로젝트에서 RestTemplate을 통해 요청을 보내고 응답을 받아보는 방식으로 실습을 진행한다.
+
+# RestTemplate을 포함하는 프로젝트 생성
+
+## GET 형식의 RestTemplate 작성
+
+```java
+@Service
+public class RestTemplateService {
+    public String getName() {
+        URI uri = UriComponentsBuilder
+            .fromUriString("http://localhost:9090")
+            .path("/api/v1/crud-api")
+            .encode()
+            .build()
+            .toUri();
+        
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> responseEntity = restTemplate.getForEntity(uri, String.class);
+        
+        return responseEntity.getBody();
+    }
+    
+    public String getNameWithPathVariable() {
+        URI uri = UriComponentsBuilder
+            .fromUriString("http://localhost:9090")
+            .path("/api/v1/crud-api/{name}")
+            .encode()
+            .build()
+            .expand("Flature") // 복수의 값을 넣어야 하는 경우 ,를 추가하여 구분
+            .toUri();
+        
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> responseEntity = restTemplate.getForEntity(uri, String.class);
+        
+        return responseEntity.getBody();
+    }
+
+    public String getNameWithQueryParam() {
+        URI uri = UriComponentsBuilder
+            .fromUriString("http://localhost:9090")
+            .path("/api/v1/crud-api/param")
+            .queryParam("name", "Flature")
+            .encode()
+            .build()
+            .toUri();
+        
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> responseEntity = restTemplate.getForEntity(uri, String.class);
+        
+        return responseEntity.getBody();
+    }
+}
+```
+
+RestTemplate을 생성하고 사용하는 방법은 다양합니다. 가장 보편적인 방법은 `UriComponentsBuilder`를 사용하는 방법입니다.
+
+`UriComponentsBuilder`는 스프링 프레임워크에서 제공하는 클래스로서 여러 파라미터를 연결해서 URI 형식으로 만드는 기능을 수행합니다.
+
+## RestTemplate 커스텀 설정
+
+RestTemplate은 HTTPClient를 추상화하고 있으며, HttpClient의 종류에 따라 기능에 차이가 있습니다. RestTemplate은 기본적으로 커넥션 풀을 지원하지 않습니다. 이 기능을 지원하지 않으면 매번 호출할 때마다 포트를 열어 커넥션을 생성하게 되는데, 이를 방지하기 위해 커넥션 풀 기능을 활성화해서 재사용할 수 있게 하는 것이 좋습니다.
+
+이 기능을 활성화하는 대표적인 방법은 아파치에서 제공하는 HttpClient로 대체해서 사용하는 방식입니다.
+
+## WebClient란?
+
+최신 버전에서는 RestTemplate이 지원 중단되고 WebClient를 사용 권장합니다. WebClient는 리액터 기반으로 동작하는 API입니다.
+
+### WebClient의 특징
+
+- 논블로킹 I/O 지원
+- 리액티브 스트림의 백프레셔를 지원
+- 적은 하드웨어 리소스로 동시성을 지원
+- 함수형 API를 지원
+- 동기, 비동기 상호작용을 지원
+- 스트리밍 지원
+
+## WebClient 사용하기
+
+### WebClient 구현
+
+구현하는 방법에는 `create()` 메서드를 이용한 생성과 `builder()`를 이용한 생성이 있습니다.
+
+#### WebClient 생성
+
+```java
+@Service
+public class WebClientService {
+    public String getName() {
+        WebClient webClient = WebClient.builder()
+            .baseUrl("http://localhost:9090")
+            .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+            .build();
+        
+        return webClient.get()
+            .uri("/api/v1/crud-api")
+            .retrieve()
+            .bodyToMono(String.class)
+            .block();
+    }
+    
+    public String getNameWithPathVariable() {
+        WebClient webClient = WebClient.create("http://localhost:9090");
+        
+        ResponseEntity<String> responseEntity = webClient.get()
+            .uri(uriBuilder -> uriBuilder.path("/api/v1/crud-api/{name}")
+            .build("Flature"))
+            .retrieve().toEntity(String.class).block();
+        
+        return responseEntity.getBody();
+    }
+    
+    public String getNameWithParameter() {
+        WebClient webClient = WebClient.create("http://localhost:9090");
+        
+        return webClient.get().uri(uriBuilder -> uriBuilder.path("/api/v1/crud-api")
+            .queryParam("name", "Flature")
+            .build())
+            .exchangeToMono(clientResponse -> {
+                if (clientResponse.statusCode().equals(HttpStatus.OK)) {
+                    return clientResponse.bodyToMono(String.class);
+                } else {
+                    return clientResponse.createException().flatMap(Mono::error);
+                }
+            })
+            .block();
+    }
+}
+```
+
+`WebClient`는 우선 객체를 생성한 후 요청을 전달하는 방식으로 동작합니다. 일반적으로 `WebClient` 객체를 생성한 후 재사용하는 방식으로 구현하는 것이 좋습니다.
+
+### 예제에서 소개된 메서드 외에 builder()를 사용할 경우 활용할 수 있는 메서드
+
+- `defaultHeader()`: WebClient의 기본 헤더 설정
+- `defaultCookie()`: WebClient의 기본 쿠키 설정
+- `defaultUriVariables()`: WebClient의 기본 URI 확장 값 설정
+- `filter()`: WebClient에서 발생하는 요청에 대한 필터 설정
+
+빌드된 WebClient는 변경할 수 없으나, 복사해서 사용할 수는 있습니다.
+
+```java
+// WebClient 복제
+WebClient webClient = WebClient.create("http://localhost:9090");
+WebClient clone = webClient.mutate().build();
+```
+
+`WebClient`는 HTTP 메서드를 `get()`, `post()`, `put()`, `delete()` 등의 네이밍이 명확한 메서드로 설정할 수 있으며, URI를 확장하는 방법으로 `uri()` 메서드를 사용할 수 있습니다.
+
+`retrieve()` 메서드는 요청에 대한 응답을 받았을 때 그 값을 추출하는 방법 중 하나입니다. `retrieve()`는 `bodyToMono()` 메서드를 통해 리턴 타입을 설정해서 문자열 객체를 받아오게 되어 있습니다.
+
+## 정리
+
+웹 통신을 위해 RestTemplate과 WebClient를 사용하는 방법을 정리했습니다. 실무에서 다른 서버의 리소스에 접근하는 상황은 자주 발생합니다. 이러한 경우 통신 모듈을 이용해 기능을 구현하면 됩니다. 책에서 소개한 방법을 익힌 후 통신하는 횟수나 접근하는 서버의 특성에 맞게 커넥션 풀이나 타임아웃 등의 설정을 최적화하는 작업으로 심화 학습을 진행하십시오.
+
+
+
+
