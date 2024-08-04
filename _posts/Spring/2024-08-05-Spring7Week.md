@@ -12,8 +12,8 @@ permalink: /categories/Spring7Week/ # url
 toc: true
 toc_sticky: true
 
-date: 2024-08-05
-last_modified_at: 2024-08-05
+date: 2024-08-04
+last_modified_at: 2024-08-04
 ---
 
 [스프링부트 핵심가이드 프로젝트 따라하면서 짠 코드](https://github.com/seokseungmin/actuator)<br>
