@@ -1222,3 +1222,212 @@ public class SignUpResultDto {
 
 여기까지 구현이 완료되면 정상적으로 스프링 시큐리티가 동작하는 애플리케이션 환경이 완성된 것입니다.
 
+
+# 테스트
+
+| **Name**  | **Description** | **Type** | **Location** | **Example** |
+|-----------|-----------------|----------|--------------|-------------|
+| id        | 사용자 ID       | string   | query        | flature     |
+| password  | 사용자 비밀번호 | string   | query        | 1234        |
+| name      | 사용자 이름     | string   | query        | 장정우      |
+| role      | 사용자 역할     | string   | query        | ADMIN       |
+
+```
+Server response
+Code	Details
+200	
+Response body
+Download
+{
+  "success": true,
+  "code": 0,
+  "msg": "Success"
+}
+Response headers
+ cache-control: no-cache,no-store,max-age=0,must-revalidate 
+ connection: keep-alive 
+ content-type: application/json 
+ date: Mon,05 Aug 2024 11:27:56 GMT 
+ expires: 0 
+ keep-alive: timeout=60 
+ pragma: no-cache 
+ transfer-encoding: chunked 
+ vary: Origin,Access-Control-Request-Method,Access-Control-Request-Headers 
+ x-content-type-options: nosniff 
+ x-frame-options: DENY 
+ x-xss-protection: 0
+```
+
+
+| **Name**  | **Description**   | **Type** | **Location** | **Example** |
+|-----------|-------------------|----------|--------------|-------------|
+| id        | 사용자 ID         | string   | query        | flature     |
+| password  | 사용자 비밀번호   | string   | query        | 1234        |
+
+```
+
+Code	Details
+200	
+Response body
+Download
+{
+  "success": true,
+  "code": 0,
+  "msg": "Success",
+  "token": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJmbGF0dXJlIiwicm9sZXMiOlsiUk9MRV9BRE1JTiJdLCJpYXQiOjE3MjI4NTcyODksImV4cCI6MTcyMjg2MDg4OX0.lILDh3uPU65lXC3Y6smP0J6xDxhS9zLKRcj0FqTWvVM"
+}
+Response headers
+ cache-control: no-cache,no-store,max-age=0,must-revalidate 
+ connection: keep-alive 
+ content-type: application/json 
+ date: Mon,05 Aug 2024 11:28:09 GMT 
+ expires: 0 
+ keep-alive: timeout=60 
+ pragma: no-cache 
+ transfer-encoding: chunked 
+ vary: Origin,Access-Control-Request-Method,Access-Control-Request-Headers 
+ x-content-type-options: nosniff 
+ x-frame-options: DENY 
+ x-xss-protection: 0
+```
+
+```
+[2024-08-05 20:43:39.158] [INFO ] [http-nio-8080-exec-5] com.springboot.security.service.impl.SignServiceImpl [getSignInResult] Id : flature
+[2024-08-05 20:43:39.158] [INFO ] [http-nio-8080-exec-5] com.springboot.security.service.impl.SignServiceImpl [getSignInResult] 패스워드 비교 수행
+[2024-08-05 20:43:39.240] [INFO ] [http-nio-8080-exec-5] com.springboot.security.service.impl.SignServiceImpl [getSignInResult] SignInResultDto 객체 생성
+[2024-08-05 20:43:39.240] [INFO ] [http-nio-8080-exec-5] com.springboot.security.config.security.JwtTokenProvider [createToken] 토큰 생성 시작
+[2024-08-05 20:43:39.257] [INFO ] [http-nio-8080-exec-5] com.springboot.security.config.security.JwtTokenProvider [createToken] 토큰 생성 완료
+[2024-08-05 20:43:39.257] [INFO ] [http-nio-8080-exec-5] com.springboot.security.service.impl.SignServiceImpl [getSignInResult] SignInResultDto 객체에 값 주입
+[2024-08-05 20:43:39.257] [INFO ] [http-nio-8080-exec-5] com.springboot.security.data.controller.SignController [signIn] 정상적으로 로그인 되었습니다. id : flature , token : eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJmbGF0dXJlIiwicm9sZXMiOlsiUk9MRV9BRE1JTiJdLCJpYXQiOjE3MjI4NTgyMTksImV4cCI6MTcyMjg2MTgxOX0.hpgvOWx9UnARFWw13ArmKLhlACgDRLQbld6jy1UM7Go
+```
+
+| **Name**         | **Description**                         | **Type** | **Location** | **Example** |
+|------------------|-----------------------------------------|----------|--------------|-------------|
+| X-AUTH-TOKEN *   | 로그인 성공 후 발급 받은 access_token  | string   | header       | eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJmbGF0dXJlIiwicm9sZXMiOlsiUk9MRV9BRE1JTiJdLCJpYXQiOjE3MjI4NTgyMTksImV4cCI6MTcyMjg2MTgxOX0.hpgvOWx9UnARFWw13ArmKLhlACgDRLQbld6jy1UM7Go |
+
+| **Request body** |                                           |
+|------------------|-------------------------------------------|
+| application/json |                                           |
+| {                |                                           |
+|   "name": "공책",|                                           |
+|   "price": 2000, |                                           |
+|   "stock": 3500  |                                           |
+| }                |                                           |
+
+| **Responses**    |                                           |
+|------------------|-------------------------------------------|
+| Execute          |                                           |
+| Clear            |                                           |
+
+```
+[2024-08-05 20:44:44.901] [INFO ] [http-nio-8080-exec-8] com.springboot.security.config.security.JwtTokenProvider [getAuthentication] 토큰 인증 정보 조회 완료, UserDetails username : flature
+[2024-08-05 20:44:44.902] [INFO ] [http-nio-8080-exec-8] com.springboot.security.config.security.JwtAuthenticationFilter [doFilterInternal] token 값 유효성 체크 완료
+[2024-08-05 20:44:44.929] [INFO ] [http-nio-8080-exec-8] com.springboot.security.service.impl.ProductServiceImpl [saveProduct] productDto : ProductDto(name=공책, price=2000, stock=3500)
+Hibernate: 
+    insert 
+    into
+        product
+        (create_at, name, price, stock, update_at) 
+    values
+        (?, ?, ?, ?, ?) 
+    returning number
+[2024-08-05 20:44:44.936] [INFO ] [http-nio-8080-exec-8] com.springboot.security.service.impl.ProductServiceImpl [saveProduct] savedProduct : Product(number=1, price=2000, stock=3500, createAt=2024-08-05T20:44:44.930102900, updateAt=2024-08-05T20:44:44.930102900)
+[2024-08-05 20:44:44.937] [INFO ] [http-nio-8080-exec-8] com.springboot.security.data.controller.ProductController [createProduct] Response Time : 9ms
+```
+
+토큰 값이 틀렸을 경우
+
+```
+Code	Details
+401
+Undocumented
+Error: response status is 401
+
+Response body
+Download
+{
+  "msg": "인증이 실패하였습니다."
+}
+Response headers
+ cache-control: no-cache,no-store,max-age=0,must-revalidate 
+ connection: keep-alive 
+ content-length: 42 
+ content-type: application/json;charset=utf-8 
+ date: Mon,05 Aug 2024 11:46:42 GMT 
+ expires: 0 
+ keep-alive: timeout=60 
+ pragma: no-cache 
+ vary: Origin,Access-Control-Request-Method,Access-Control-Request-Headers 
+ x-content-type-options: nosniff 
+ x-frame-options: DENY 
+ x-xss-protection: 0 
+Responses
+```
+
+```
+[2024-08-05 20:44:44.936] [INFO ] [http-nio-8080-exec-8] com.springboot.security.service.impl.ProductServiceImpl [saveProduct] savedProduct : Product(number=1, price=2000, stock=3500, createAt=2024-08-05T20:44:44.930102900, updateAt=2024-08-05T20:44:44.930102900)
+[2024-08-05 20:44:44.937] [INFO ] [http-nio-8080-exec-8] com.springboot.security.data.controller.ProductController [createProduct] Response Time : 9ms
+[2024-08-05 20:46:42.875] [INFO ] [http-nio-8080-exec-10] com.springboot.security.config.security.JwtTokenProvider [resolveToken] HTTP 헤더에서 Token 값 추출
+[2024-08-05 20:46:42.875] [INFO ] [http-nio-8080-exec-10] com.springboot.security.config.security.JwtAuthenticationFilter [doFilterInternal] token 값 추출 완료. token : 1233445
+[2024-08-05 20:46:42.875] [INFO ] [http-nio-8080-exec-10] com.springboot.security.config.security.JwtAuthenticationFilter [doFilterInternal] token 값 유효성 체크 시작
+[2024-08-05 20:46:42.875] [INFO ] [http-nio-8080-exec-10] com.springboot.security.config.security.JwtTokenProvider [validateToken] 토큰 유효 체크 시작
+[2024-08-05 20:46:42.877] [INFO ] [http-nio-8080-exec-10] com.springboot.security.config.security.JwtTokenProvider [validateToken] 토큰 유효 체크 예외 발생
+[2024-08-05 20:46:42.879] [INFO ] [http-nio-8080-exec-10] com.springboot.security.data.dto.CustomAuthenticationEntryPoint [commence] 인증 실패로 response.sendError 발생
+```
+
+| **Name**  | **Description**   | **Type** | **Location** | **Example** |
+|-----------|-------------------|----------|--------------|-------------|
+| id *      | 사용자 ID         | string   | query        | Diak        |
+| password *| 사용자 비밀번호   | string   | query        | 1234        |
+| name *    | 사용자 이름       | string   | query        | 석승민      |
+| role *    | 사용자 역할       | string   | query        | USER        |
+
+| **Name**        | **Description**                         | **Type** | **Location** | **Example**                                                                                                                                                   |
+|-----------------|-----------------------------------------|----------|--------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| X-AUTH-TOKEN *  | 로그인 성공 후 발급 받은 access_token  | string   | header       | eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJEaWFrIiwicm9sZXMiOlsiUk9MRV9VU0VSIl0sImlhdCI6MTcyMjg1ODU2MiwiZXhwIjoxNzIyODYyMTYyfQ.FfAaplChk2WtOpJxKIlLRazED5_u0zhe6nM6WQpqqgk |
+
+**Request body**
+
+| **Content-Type**    | **Example**               |
+|---------------------|---------------------------|
+| application/json    | {                         |
+|                     |   "name": "공책",         |
+|                     |   "price": 2000,          |
+|                     |   "stock": 3500           |
+|                     | }                         |
+
+```
+
+Code	Details
+400	
+Error: response status is 400
+
+Response body
+Download
+{
+  "code": "400",
+  "error type": "Bad Request",
+  "message": "접근이 금지되었습니다."
+}
+Response headers
+ cache-control: no-cache,no-store,max-age=0,must-revalidate 
+ connection: close 
+ content-type: application/json 
+ date: Mon,05 Aug 2024 11:49:34 GMT 
+ expires: 0 
+ pragma: no-cache 
+ transfer-encoding: chunked 
+ vary: Origin,Access-Control-Request-Method,Access-Control-Request-Headers 
+ x-content-type-options: nosniff 
+ x-frame-options: DENY 
+ x-xss-protection: 0
+```
+
+```
+[2024-08-05 20:49:34.302] [INFO ] [http-nio-8080-exec-6] com.springboot.security.config.security.JwtTokenProvider [getAuthentication] 토큰 인증 정보 조회 완료, UserDetails username : Diak
+[2024-08-05 20:49:34.302] [INFO ] [http-nio-8080-exec-6] com.springboot.security.config.security.JwtAuthenticationFilter [doFilterInternal] token 값 유효성 체크 완료
+[2024-08-05 20:49:34.304] [ERROR] [http-nio-8080-exec-6] com.springboot.security.data.controller.SignController ExceptionHandler 호출
+java.lang.RuntimeException: 접근이 금지되었습니다.
+```
+
+권한이 없기 때문에 발생하는 인가 예외가 발생합니다.
