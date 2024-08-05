@@ -16,7 +16,7 @@ date: 2024-08-05
 last_modified_at: 2024-08-05
 ---
 
-[스프링부트 핵심가이드 프로젝트 따라하면서 짠 코드](https://github.com/seokseungmin/actuator)<br>
+[스프링부트 핵심가이드 프로젝트 따라하면서 짠 코드](https://github.com/seokseungmin/security)<br>
 
 본 게시글은 '스프링 부트 핵심 가이드' 책의 내용을 정리한 것입니다.<br>
 저자 : 장정우<br>
