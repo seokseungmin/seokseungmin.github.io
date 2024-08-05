@@ -464,16 +464,22 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 
@@ -483,8 +489,10 @@ import java.util.List;
 public class JwtTokenProvider {
 
     private final UserDetailsService service;
-    private final long tokenValidMillisecond = 1000L * 60 * 60;
     private Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+
+    private final long tokenValidMillisecond = 1000L * 60 * 60;
+
 
     public String createToken(String userUid, List<String> roles) {
         log.info("[createToken] 토큰 생성 시작");
@@ -545,30 +553,13 @@ public class JwtTokenProvider {
                     .parseClaimsJws(token);
 
             return !claims.getBody().getExpiration().before(new Date());
-        } catch (Exception e) {
+        } catch(Exception e) {
             log.info("[validateToken] 토큰 유효 체크 예외 발생");
 
             return false;
         }
     }
 }
-```
-
-토큰을 생성하기 위해서는 secretKey가 필요하므로 secretKey 값을 정의합니다.
-@Value의 값은 application.properties 파일에서 다음과 같이 정의할 수 있습니다.
-
-```
-springboot.jwt.secret=flature!@#
-```
-
-```java
-@PostConstruct
-    protected void init() {
-        LOGGER.info("[init] JwtTokenProvider 내 secretKey 초기화 시작");
-        secretKey = Base64.getEncoder().encodeToString(secretKey.getBytes(StandardCharsets.UTF_8));
-
-        LOGGER.info("[info] JwtTokenProvider 내 secretKey 초기화 완료");
-    }
 ```
 
 여기서 사용한 @PostConstruct 어노테이션은 해당 객체가 빈 객체로 주입된 이후 수행되는 메서드를 가리킵니다.
