@@ -786,6 +786,15 @@ public class SecurityConfiguration {
 }
 ```
 
+- `httpBasic(httpBasic -> httpBasic.disable())`: HTTP 기본 인증을 비활성화합니다.
+- `csrf(csrf -> csrf.disable())`: CSRF 보호를 비활성화합니다.
+- `sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))`: 세션을 상태 없이 관리하도록 설정합니다. 이는 주로 JWT를 사용하는 애플리케이션에서 세션을 사용하지 않도록 하기 위함입니다.
+- `authorizeHttpRequests(authorize -> authorize.requestMatchers(...).permitAll().anyRequest().hasRole("ADMIN"))`: 특정 URL 패턴에 대해 접근을 허용하고, 나머지 요청에 대해서는 ADMIN 역할이 있어야 접근할 수 있도록 설정합니다.
+- `exceptionHandling(exceptionHandling -> exceptionHandling.accessDeniedHandler(new CustomAccessDeniedHandler()).authenticationEntryPoint(new CustomAuthenticationEntryPoint()))`: 접근이 거부되었을 때와 인증이 실패했을 때 사용자 정의 처리기를 사용하도록 설정합니다.
+- `http.addFilterBefore(new JwtAuthenticationFilter(provider), UsernamePasswordAuthenticationFilter.class)`: `JwtAuthenticationFilter`를 `UsernamePasswordAuthenticationFilter` 앞에 추가하여 JWT 인증을 처리합니다.
+- `PasswordEncoderFactories.createDelegatingPasswordEncoder()`: 다양한 비밀번호 인코딩 방식을 지원하는 `PasswordEncoder`를 생성합니다. 기본적으로 BCrypt를 사용하며, 기존의 여러 인코딩 방식과 호환됩니다.
+
+
 스프링 시큐리티의 설정은 대부분 HttpSecurity를 통해 진행합니다.
 대표적인 기능은 다음과 같습니다.
 
