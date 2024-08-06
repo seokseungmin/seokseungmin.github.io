@@ -613,11 +613,11 @@ UsernamePasswordAuthenticationToken은 AbstractAuthenticationToken을 상속받�
 
 
 ```java
-public String getUsername(String token) {
+ public String getUsername(String token) {
         log.info("[getUsername] 토큰 기반 회원 구별 정보 추출");
         String info = Jwts
                 .parserBuilder()
-                .setSigningKey(secretKey).build()
+                .setSigningKey(key).build()
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
@@ -642,13 +642,13 @@ Jwt.parser()를 통해 secretKey를 설정하고 클레임을 추출해서 토�
 헤더의 이름은 임의로 변경할 수 있습니다.
 
 ```java
-public boolean validateToken(String token) {
+  public boolean validateToken(String token) {
         log.info("[validateToken] 토큰 유효 체크 시작");
 
         try {
             Jws<Claims> claims = Jwts
                     .parserBuilder()
-                    .setSigningKey(secretKey).build()
+                    .setSigningKey(key).build()
                     .parseClaimsJws(token);
 
             return !claims.getBody().getExpiration().before(new Date());
