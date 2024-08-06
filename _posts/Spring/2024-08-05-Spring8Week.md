@@ -722,6 +722,7 @@ doFilter() 메서드는 서블릿을 실행하는 메서드인데, doFilter() �
 package com.springboot.security.config.security;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -741,8 +742,6 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 public class SecurityConfiguration {
 
     private final JwtTokenProvider provider;
-    private final AccessDeniedHandler accessDeniedHandler;
-    private final AuthenticationEntryPoint authenticationEntryPoint;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -767,8 +766,8 @@ public class SecurityConfiguration {
                         .anyRequest().hasRole("ADMIN")
                 )
                 .exceptionHandling(exceptionHandling -> exceptionHandling
-                        .accessDeniedHandler(accessDeniedHandler)
-                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(new CustomAccessDeniedHanlder())
+                        .authenticationEntryPoint(new CustomAuthenticationEntryPoint())
                 );
 
         // 추가된 필터 설정
