@@ -821,18 +821,17 @@ package com.springboot.security.config.security;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.web.access.AccessDeniedHandler;
 
 import java.io.IOException;
 
+@Slf4j
 public class CustomAccessDeniedHanlder implements AccessDeniedHandler {
-    private final Logger LOGGER = LoggerFactory.getLogger(CustomAccessDeniedHanlder.class);
 
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response, org.springframework.security.access.AccessDeniedException accessDeniedException) throws IOException, ServletException {
-        LOGGER.info("[handle] 접근이 막혔을 경우 경로 리다이렉트");
+        log.info("[handle] 접근이 막혔을 경우 경로 리다이렉트");
         response.sendRedirect("/sign-api/exception");
     }
 }
@@ -850,26 +849,25 @@ AccessDeniedHandler의  구현 클래스인 CustomAccessDeniedHandler 클래스�
 다음은 인증이 실패한 상황을 처리하는 AuthenticationEntryPoint 인터페이스를 구현한 CustomAuthenticationEntryPoint 클래스입니다.
 
 ```java
-package com.springboot.security.data.dto;
+package com.springboot.security.config.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.springboot.security.data.dto.EntryPointErrorResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
-import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
 @Slf4j
-@Component
 public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper objectMapper = new ObjectMapper();
         log.info("[commence] 인증 실패로 response.sendError 발생");
 
         EntryPointErrorResponse entryPointErrorResponse = new EntryPointErrorResponse();
@@ -877,10 +875,9 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
 
         response.setStatus(401);
         response.setContentType("application/json");
-        response.setCharacterEncoding("utf-8");
-        response.getWriter().write(mapper.writeValueAsString(entryPointErrorResponse));
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write(objectMapper.writeValueAsString(entryPointErrorResponse));
     }
-
 }
 ```
 
