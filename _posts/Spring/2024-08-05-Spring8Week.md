@@ -117,7 +117,7 @@ SwitchUserFilter
 보안 필터체인은 WebSecurityConfigurerAdapter 클래스를 상속받아 설정할 수 있습니다.
 앞에서 이야기한 것처럼 필터체인 프록시는 여러 보안 필터체인을 가질 수 있는데,
 여러 보안 필터체인을 만들기 위해서는 WebSecurityConfigurerAdapter 클래스를 상속받는 클래스를 여러 개 생성하면 됩니다.
-이때 WebSecurityConfigurerAdapter 클래스에는 #Order 어노테이션을 통해 우선순위가 지정돼 있는데,
+이때 WebSecurityConfigurerAdapter 클래스에는 @Order 어노테이션을 통해 우선순위가 지정돼 있는데,
 2개 이상의 클래스를 생성했을 때 똑같은 설정으로 우선순위가 100이 설정돼 있으면 예외가 발생하기 때문에 상속받은 클래스에서
 @Order 어노테이션을 지정해 순서를 정의하는 것이 중요합니다.
 별도의 설정이 없다면 스프링 시큐리티에서는 다음과 같이 SecurityFilterChain에서 사용하는 필터중 UsernamePasswordAuthenticationFilter를 통해 인증을 처리합니다.
@@ -125,7 +125,7 @@ SwitchUserFilter
 ![new repo](/assets/images/posts_img/Spring/UsernamePasswordAuthenticationFilter.png)
 
 위 그림의 인증 수행 과정을 설명하면 다음과 같습니다.
-클라이언트로부터 요청을 받으면 서블릿 필터에서 SecurityFilterChain에서으로 작업이 위임되고
+클라이언트로부터 요청을 받으면 서블릿 필터에서 SecurityFilterChain으로 작업이 위임되고
 그중 UsernamePasswordAuthenticationFilter(위 그림에서 AuthenticationFilter에 해당)에서 인증을 처리합니다.
 AuthenticationFilter는 요청 객체(HttpServletRequest)에서 username과 password를 추출해서 토큰을 생성합니다.
 그러고 나서 AuthenticationManager에게 토큰을 전달합니다. AuthenticationManager는 인터페이스이며, 일반적으로 사용되는 구현체는 ProviderManager입니다.
@@ -143,7 +143,7 @@ AuthenticationFilter는 검증된 토큰을 SecurityContextHolder에 있는 Secu
  
 # JWT
 JWT(JSON Web TOken)는 당사자 간에 정보를 JSON 형태로 안전하게 전송하기 위한 토큰입니다.
-JWT는 URL로 이용할 수 있는 문자열로만 구성돼 있으며, 디지털 서명이 적용돼 있어 신회할 수 있습니다.
+JWT는 URL로 이용할 수 있는 문자열로만 구성돼 있으며, 디지털 서명이 적용돼 있어 신할 수 있습니다.
 JWT는 주로 서버와의 통신에서 권한 인가를 위해 사용됩니다.
 URL에서 사용할 수 있는 문자열로만 구성돼 있기 때문에 HTTP 구성요소 어디든 위치할 수 있습니다.
 
@@ -281,6 +281,7 @@ import java.util.stream.Collectors;
 @Getter
 @Setter
 @Entity
+@Table
 public class User extends BaseEntity implements UserDetails {
 
     @Id
@@ -400,7 +401,7 @@ isAccountNonLocked(): 계정이 잠겨있는지 반환. true는 잠기지 않았
 isCredentialsNonExpired(): 비밀번호가 만료됐는지 반환. true는 만료되지 않았음을 의미.
 isEnabled(): 계정이 활성화 되어 있는지 반환. true는 활성화 상태임을 의미.
 
-이번 예제에서는 계정의 상태 변경은 다루지 않을 게정이므로 true로 리턴합니다.
+이번 예제에서는 계정의 상태 변경은 다루지 않을 정이므로 true로 리턴합니다.
 이 엔티티는 앞으로 토큰을 생성할 때 토큰의 정보로 사용될 정보와 권한 정보를 갖게 됩니다.
 이번에는 앞에서 살펴본 엔티티를 조회하는 기능을 구현하기 위해 리포지토리와 서비스를 구현하겠습니다.
 리포지토리 구현은 다음과 같습니다.
@@ -451,10 +452,10 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 ```
 
 UserDetails는 스프링 시큐리티에서 제공하는 개념으로, UserDetails의 username은 각 사용자를 구분할 수 있는 ID를 의미합니다.
-username을 가지고 UserDetails 객체를 리턴하게끔 정의돼 있는데, UserDetails의 구현체로 User 엔티티를 생성했기 때문에 user 객체를 리턴하게씀 구현한 것입니다.
+username을 가지고 UserDetails 객체를 리턴하게끔 정의돼 있는데, UserDetails의 구현체로 User 엔티티를 생성했기 때문에 User 객체를 리턴하게씀 구현한 것입니다.
 
 ### JwtTokenProvider 구현
-이제 JWT 토큰을 생성하는데 필요한 정보를 UUserDetails에서 가져올 수 있기 때문에 JWT 토큰을 생성하는 TokenProvider를 생성합니다.
+이제 JWT 토큰을 생성하는데 필요한 정보를 UserDetails에서 가져올 수 있기 때문에 JWT 토큰을 생성하는 TokenProvider를 생성합니다.
 
 ```java
 package com.springboot.security.config.security;
@@ -464,22 +465,16 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 
-import java.nio.charset.StandardCharsets;
 import java.security.Key;
-import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 
@@ -489,10 +484,8 @@ import java.util.List;
 public class JwtTokenProvider {
 
     private final UserDetailsService service;
-    private Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-
     private final long tokenValidMillisecond = 1000L * 60 * 60;
-
+    private Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 
     public String createToken(String userUid, List<String> roles) {
         log.info("[createToken] 토큰 생성 시작");
@@ -553,7 +546,7 @@ public class JwtTokenProvider {
                     .parseClaimsJws(token);
 
             return !claims.getBody().getExpiration().before(new Date());
-        } catch(Exception e) {
+        } catch (Exception e) {
             log.info("[validateToken] 토큰 유효 체크 예외 발생");
 
             return false;
@@ -566,6 +559,7 @@ public class JwtTokenProvider {
 JwtTokenProvider 클래스에는 @Component 어노테이션이 지정돼 있어 애플리케이션이 가동되면서 빈으로 가동 주입됩니다.
 그때 @PostConstruct가 지정돼 있는 init() 메서드가 자동으로 실행됩니다.
 init() 메서드에서는 secretKey를 Base64 형식으로 인코딩합니다. 인코딩 전후의 문자열을 확인하면 다음과 같습니다.
+위 내용은 에러가 나서 다른 방법으로 secret키 생성해서 구현함.
 
 // Base64 인코딩 결과
 ZmxhdHvyZSFAIW==
@@ -1042,6 +1036,7 @@ SignUp()메서드는 그에 맞게 전달받은 role 객체를 확인해 User �
 PasswordEncoder는 다음과 같이 별도의 @Configuration 클래스를 생성하고 @Bean 객체로 등록하도록 구현했습니다.
 
 ```java
+@Configuration
 package com.springboot.security.config;
 
 import org.springframework.context.annotation.Bean;
